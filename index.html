@@ -940,7 +940,7 @@ let imageManifestLoaded = false;
           gameState.cycleQuestions = save.cycle_questions || 0;
           gameState.cycleHintUsed = save.hint_used_count || 0;
         }
-        updateStatsDisplay();
+        syncStatsDisplay();
       }
     };
 
@@ -1047,6 +1047,31 @@ let imageManifestLoaded = false;
       const title = document.getElementById('main-title');
       if (title) title.textContent = config.game_title || defaultConfig.game_title;
     }
+
+
+    function syncStatsDisplay() {
+      const unlockedEl = document.getElementById('unlocked-count');
+      if (unlockedEl) {
+        const unique = new Set(gameState.unlockedMonsters || []);
+        unlockedEl.textContent = String(unique.size);
+      }
+
+      const solvedEl = document.getElementById('total-solved');
+      if (solvedEl) solvedEl.textContent = String(gameState.totalQuestions || 0);
+
+      const accuracyEl = document.getElementById('total-accuracy');
+      if (accuracyEl) {
+        if (!gameState.totalQuestions) {
+          accuracyEl.textContent = '-%';
+        } else {
+          const rate = Math.round((gameState.totalCorrect / gameState.totalQuestions) * 100);
+          accuracyEl.textContent = `${rate}%`;
+        }
+      }
+    }
+
+    // backward-compatible alias for any existing callers
+    window.updateStatsDisplay = syncStatsDisplay;
 
     // ============================================
     // Image manifest loader
