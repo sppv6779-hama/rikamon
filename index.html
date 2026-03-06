@@ -1774,7 +1774,7 @@ let imageManifestLoaded = false;
       const grid = document.getElementById('zukan-grid');
       grid.innerHTML = '';
 
-      const typeOrder = { water: 0, fighting: 1, electric: 2, undefined: 99, null: 99 };
+      const typeOrder = { water: 0, fighting: 1, electric: 2, wind: 3, undefined: 99, null: 99 };
       const stageOrder = { egg: 0, baby: 1, growth: 2, mature: 3, perfect: 4, ultimate: 5 };
       const variantOrder = { accuracy: 0, balance: 1, speed: 2, undefined: 9, null: 9 };
 
@@ -2307,9 +2307,41 @@ let imageManifestLoaded = false;
     }
 
     // Key handlers
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !document.getElementById('question-screen').classList.contains('hidden')) {
+    function isScreenVisible(id) {
+      const el = document.getElementById(id);
+      return !!el && !el.classList.contains('hidden');
+    }
+
+    function handleEnterForVisibleScreen() {
+      if (isScreenVisible('question-screen')) {
         submitAnswer();
+        return true;
+      }
+
+      if (isScreenVisible('result-screen')) {
+        document.getElementById('result-next-btn')?.click();
+        return true;
+      }
+
+      if (isScreenVisible('evolution-screen')) {
+        const evoBtn = document.getElementById('evo-continue-btn');
+        if (evoBtn && !evoBtn.classList.contains('hidden') && !evoBtn.disabled) {
+          evoBtn.click();
+          return true;
+        }
+      }
+
+      if (isScreenVisible('complete-screen')) {
+        createNewEgg();
+        return true;
+      }
+
+      return false;
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && handleEnterForVisibleScreen()) {
+        e.preventDefault();
       }
       if (e.key === 'Escape') {
         closeMonsterDetail();
