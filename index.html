@@ -2532,8 +2532,9 @@ const MONSTER_IMAGE_OVERRIDES = { ...window.MonsterData.imageOverrides }; // { m
       assert('storage adapter has update', typeof storage.update === 'function');
 
       assert('preloadMonsterImages exists', typeof preloadMonsterImages === 'function');
-      assert('genre system can list genres', window.GenreSystem.listGenres().length >= 3);
+      assert('genre system can list genres', window.GenreSystem.listGenres().length >= 4);
       assert('genre system can generate water question', !!window.GenreSystem.generateQuestion('water')?.question);
+      assert('genre system can generate wind question', !!window.GenreSystem.generateQuestion('wind')?.question);
 
       // DOM existence checks (prevents null.style crashes)
       assert('start-screen exists', !!document.getElementById('start-screen'));
