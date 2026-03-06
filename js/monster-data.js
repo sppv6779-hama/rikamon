@@ -11,7 +11,6 @@
       "ultimate_fighting_accuracy": "https://image2url.com/r2/default/images/1771984319657-ba68776d-c77f-4fce-8cf0-cda010a70b9d.png",
       "ultimate_fighting_balance": "https://image2url.com/r2/default/images/1771984421992-81b1415c-351d-4207-9ee8-deb618277f22.png",
       "ultimate_fighting_speed": "https://image2url.com/r2/default/images/1771984499980-00bf23b1-e1f9-4f0c-873c-a559eb5a5788.png",
-        "baby_water": "https://image2url.com/r2/default/images/1772052961365-6c1f16ee-b0ce-42f8-b0bd-055c01255582.png",
   "baby_water": "https://image2url.com/r2/default/images/1772052961365-6c1f16ee-b0ce-42f8-b0bd-055c01255582.png",
   "growth_water": "https://image2url.com/r2/default/images/1772052997810-f5d03541-f93d-493c-af50-c7fb46b6bc68.png",
   "mature_water_accuracy": "https://image2url.com/r2/default/images/1772053023058-243b9003-b781-4c9a-a29c-5635cf902da8.png",
