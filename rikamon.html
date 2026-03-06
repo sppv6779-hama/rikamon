@@ -1,0 +1,2753 @@
+<!doctype html>
+<html lang="ja" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>りかモン - 理科モンスター育成計算ゲーム</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Zen Maru Gothic', sans-serif; }
+
+    /* =========================
+       Lab background (science classroom vibe)
+       ========================= */
+    .lab-bg {
+      background:
+        radial-gradient(900px 700px at 15% 20%, rgba(34,197,94,0.10), transparent 60%),
+        radial-gradient(900px 700px at 85% 30%, rgba(59,130,246,0.10), transparent 60%),
+        radial-gradient(900px 700px at 55% 80%, rgba(168,85,247,0.08), transparent 60%),
+        linear-gradient(180deg, rgba(2,6,23,0.0), rgba(2,6,23,0.25)),
+        linear-gradient(135deg, #07111f 0%, #0b1730 45%, #06101f 100%);
+    }
+
+    .lab-grid {
+      background-image:
+        linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(circle at 50% 35%, rgba(0,0,0,1), rgba(0,0,0,0.15) 65%, transparent 78%);
+      opacity: 0.35;
+    }
+
+    .chalk-scribble {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      color: rgba(255,255,255,0.18);
+      text-shadow: 0 0 8px rgba(255,255,255,0.08);
+      filter: blur(0.1px);
+    }
+
+    /* =========================
+       Evolution: flashy BUT no strobe
+       ========================= */
+    @keyframes energy-pulse {
+      0% { opacity: 0; transform: scale(0.75); filter: blur(14px); }
+      20% { opacity: 0.9; }
+      60% { opacity: 0.65; }
+      100% { opacity: 0; transform: scale(1.25); filter: blur(18px); }
+    }
+
+    @keyframes neon-sweep {
+      0% { opacity: 0; transform: translateX(-35%) rotate(-12deg); }
+      15% { opacity: 0.85; }
+      70% { opacity: 0.55; }
+      100% { opacity: 0; transform: translateX(35%) rotate(12deg); }
+    }
+
+    @keyframes particle-fly {
+      0% { transform: translate(0,0) scale(0.7); opacity: 0; }
+      15% { opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(1.15); opacity: 0; }
+    }
+
+    /* Digimon-like digital overlays (low opacity, no strobe) */
+    @keyframes scan-roll {
+      0% { background-position: 0 0, 0 0; opacity: 0; }
+      10% { opacity: 0.65; }
+      70% { opacity: 0.35; }
+      100% { background-position: 0 180px, 0 0; opacity: 0; }
+    }
+
+    @keyframes glitch-bars {
+      0% { opacity: 0; transform: translateY(0) scale(1); filter: blur(8px); }
+      10% { opacity: calc(0.55 * var(--p)); }
+      45% { opacity: calc(0.35 * var(--p)); transform: translateY(-2px) scale(1.02); }
+      100% { opacity: 0; transform: translateY(0) scale(1); filter: blur(10px); }
+    }
+
+    .evo-scan {
+      position: absolute;
+      inset: -6px;
+      border-radius: 9999px;
+      pointer-events: none;
+      opacity: 0;
+      mix-blend-mode: screen;
+      background-image:
+        linear-gradient(to bottom, rgba(34,197,94,0.00), rgba(34,197,94,0.12), rgba(34,197,94,0.00)),
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,255,0.00) 0px,
+          rgba(255,255,255,0.05) 2px,
+          rgba(255,255,255,0.00) 5px
+        );
+      filter: blur(2px);
+    }
+    .evo-scan.play { animation: scan-roll 900ms ease-out forwards; }
+
+    .evo-glitch {
+      position: absolute;
+      inset: -10px;
+      border-radius: 9999px;
+      pointer-events: none;
+      opacity: 0;
+      --p: 0.6;
+      mix-blend-mode: screen;
+      background:
+        repeating-linear-gradient(
+          120deg,
+          rgba(59,130,246,0.00) 0px,
+          rgba(59,130,246,0.00) 18px,
+          rgba(236,72,153,0.08) 22px,
+          rgba(236,72,153,0.00) 32px
+        ),
+        repeating-linear-gradient(
+          -120deg,
+          rgba(34,197,94,0.00) 0px,
+          rgba(34,197,94,0.00) 22px,
+          rgba(245,158,11,0.08) 26px,
+          rgba(245,158,11,0.00) 38px
+        );
+      filter: blur(10px);
+    }
+    .evo-glitch.play { animation: glitch-bars 850ms ease-out forwards; }
+
+    .evo-energy {
+      position: absolute;
+      inset: -18px;
+      border-radius: 9999px;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(34,197,94,0.18), transparent 55%),
+        radial-gradient(circle at 35% 40%, rgba(59,130,246,0.22), transparent 52%),
+        radial-gradient(circle at 65% 60%, rgba(236,72,153,0.20), transparent 55%),
+        conic-gradient(from 180deg, rgba(34,197,94,0.0), rgba(34,197,94,0.22), rgba(59,130,246,0.22), rgba(168,85,247,0.22), rgba(236,72,153,0.22), rgba(245,158,11,0.22), rgba(34,197,94,0.0));
+      filter: blur(16px);
+      opacity: 0;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+    .evo-energy.play { animation: energy-pulse 1.25s ease-out forwards; }
+
+    .evo-sweep {
+      position: absolute;
+      inset: -10px;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, transparent, rgba(34,197,94,0.28), rgba(59,130,246,0.28), rgba(236,72,153,0.22), transparent);
+      filter: blur(10px);
+      opacity: 0;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+    .evo-sweep.play { animation: neon-sweep 1.05s ease-out forwards; }
+
+    .evo-particles { position: absolute; inset: 0; pointer-events: none; }
+    .evo-particle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 9999px;
+      opacity: 0;
+      animation: particle-fly 900ms ease-out forwards;
+      box-shadow: 0 0 18px rgba(34,197,94,0.22), 0 0 18px rgba(59,130,246,0.22), 0 0 18px rgba(236,72,153,0.18);
+    }
+    .evo-particle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 9999px;
+      opacity: 0;
+      animation: particle-fly 900ms ease-out forwards;
+      box-shadow: 0 0 18px rgba(34,197,94,0.22), 0 0 18px rgba(59,130,246,0.22), 0 0 18px rgba(236,72,153,0.18);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { filter: drop-shadow(0 0 10px rgba(255,255,255,0.3)); }
+      50% { filter: drop-shadow(0 0 25px rgba(255,255,255,0.8)); }
+    }
+
+    @keyframes evolve-spin {
+      0% { transform: scale(0.3) rotateY(0deg) rotateZ(0deg); opacity: 0; }
+      25% { opacity: 1; }
+      50% { transform: scale(1.35) rotateY(180deg) rotateZ(180deg); }
+      75% { opacity: 1; }
+      100% { transform: scale(1) rotateY(360deg) rotateZ(360deg); opacity: 1; }
+    }
+
+    @keyframes evolve-burst {
+      0% { transform: scale(0); opacity: 1; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+
+    @keyframes evolve-lightning {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-5deg); }
+      75% { transform: rotate(5deg); }
+    }
+
+    @keyframes sparkle {
+      0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1) rotate(180deg); }
+    }
+
+    @keyframes test-tube-bubble {
+      0%, 100% { transform: translateY(0px); opacity: 0.5; }
+      50% { transform: translateY(-20px); opacity: 1; }
+    }
+
+    /* extra flashy effects */
+    @keyframes screen-shake {
+      0%, 100% { transform: translate(0,0); }
+      10% { transform: translate(-6px, 2px); }
+      20% { transform: translate(5px, -3px); }
+      30% { transform: translate(-4px, -2px); }
+      40% { transform: translate(6px, 4px); }
+      50% { transform: translate(-2px, 5px); }
+      60% { transform: translate(3px, -4px); }
+      70% { transform: translate(-5px, 3px); }
+      80% { transform: translate(4px, 1px); }
+      90% { transform: translate(-2px, -5px); }
+    }
+
+    @keyframes rainbow-flash {
+      0% { opacity: 0; transform: scale(0.6); }
+      20% { opacity: 1; }
+      100% { opacity: 0; transform: scale(1.4); }
+    }
+
+    .monster-float { animation: float 3s ease-in-out infinite; }
+    .monster-glow { animation: pulse-glow 2s ease-in-out infinite; }
+    .evolve-spin { animation: evolve-spin 2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+    .evolve-burst { animation: evolve-burst 1.5s ease-out forwards; }
+    .evolve-lightning { animation: evolve-lightning 0.12s infinite; }
+    .egg-shake { animation: shake 0.5s ease-in-out infinite; }
+
+    .sparkle {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      animation: sparkle 1s ease-in-out infinite;
+    }
+
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), transparent);
+      animation: test-tube-bubble 2s ease-in-out infinite;
+    }
+
+    .btn-3d {
+      transform: translateY(0);
+      box-shadow: 0 6px 0 rgba(0,0,0,0.3), 0 8px 20px rgba(0,0,0,0.2);
+      transition: all 0.1s;
+    }
+
+    .btn-3d:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .glass {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .progress-bar {
+      background: linear-gradient(90deg, #fbbf24, #f59e0b);
+      box-shadow: 0 0 10px rgba(251,191,36,0.5);
+    }
+
+    .screen-shake { animation: screen-shake 0.55s ease-in-out; }
+
+    .rainbow-ring {
+      position: absolute;
+      inset: -10px;
+      border-radius: 9999px;
+      background: conic-gradient(from 0deg, #22c55e, #06b6d4, #a855f7, #ec4899, #f59e0b, #22c55e);
+      filter: blur(10px);
+      opacity: 0;
+      animation: rainbow-flash 1.2s ease-out forwards;
+      pointer-events: none;
+    }
+
+    /* =========================
+       ULTIMATE EVOLUTION (special, no strobe)
+       ========================= */
+    @keyframes ultimate-crown {
+      0% { opacity: 0; transform: scale(0.7) rotate(0deg); filter: blur(12px); }
+      18% { opacity: 0.9; }
+      65% { opacity: 0.55; }
+      100% { opacity: 0; transform: scale(1.55) rotate(120deg); filter: blur(18px); }
+    }
+
+    @keyframes ultimate-starfield {
+      0% { opacity: 0; transform: scale(0.95); }
+      20% { opacity: 0.8; }
+      70% { opacity: 0.45; }
+      100% { opacity: 0; transform: scale(1.05); }
+    }
+
+    @keyframes ultimate-sigil {
+      0% { opacity: 0; transform: scale(0.85); filter: blur(10px); }
+      25% { opacity: 0.9; }
+      75% { opacity: 0.55; }
+      100% { opacity: 0; transform: scale(1.25); filter: blur(14px); }
+    }
+
+    .ultimate-overlay {
+      position: absolute;
+      inset: -22px;
+      border-radius: 9999px;
+      pointer-events: none;
+      opacity: 0;
+      mix-blend-mode: screen;
+    }
+
+    .ultimate-overlay .crown {
+      position: absolute;
+      inset: 0;
+      border-radius: 9999px;
+      background:
+        conic-gradient(from 0deg,
+          rgba(255,255,255,0.00),
+          rgba(255,255,255,0.10),
+          rgba(34,197,94,0.22),
+          rgba(59,130,246,0.22),
+          rgba(168,85,247,0.22),
+          rgba(236,72,153,0.20),
+          rgba(245,158,11,0.20),
+          rgba(255,255,255,0.00)
+        );
+      filter: blur(14px);
+      opacity: 0;
+    }
+
+    .ultimate-overlay .sigil {
+      position: absolute;
+      inset: 18px;
+      border-radius: 9999px;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.10), transparent 55%),
+        repeating-linear-gradient(
+          0deg,
+          rgba(59,130,246,0.00) 0px,
+          rgba(59,130,246,0.06) 3px,
+          rgba(59,130,246,0.00) 7px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          rgba(236,72,153,0.00) 0px,
+          rgba(236,72,153,0.05) 4px,
+          rgba(236,72,153,0.00) 8px
+        );
+      filter: blur(8px);
+      opacity: 0;
+    }
+
+    .ultimate-overlay .starfield {
+      position: absolute;
+      inset: 8px;
+      border-radius: 9999px;
+      opacity: 0;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.16) 0 1px, transparent 2px),
+        radial-gradient(circle at 70% 25%, rgba(255,255,255,0.14) 0 1px, transparent 2px),
+        radial-gradient(circle at 35% 70%, rgba(255,255,255,0.14) 0 1px, transparent 2px),
+        radial-gradient(circle at 80% 70%, rgba(255,255,255,0.12) 0 1px, transparent 2px),
+        radial-gradient(circle at 55% 45%, rgba(255,255,255,0.10) 0 1px, transparent 2px);
+      filter: blur(0.4px);
+    }
+
+    .ultimate-overlay.play { opacity: 1; }
+    .ultimate-overlay.play .crown { animation: ultimate-crown 1.45s ease-out forwards; }
+    .ultimate-overlay.play .sigil { animation: ultimate-sigil 1.75s ease-out forwards; animation-delay: 120ms; }
+    .ultimate-overlay.play .starfield { animation: ultimate-starfield 1.9s ease-out forwards; animation-delay: 90ms; }
+
+    .monster-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 0 20px rgba(255,255,255,0.15));
+    }
+
+    /* =========================
+       Title customization (start screen)
+       ========================= */
+    .title-monster-item {
+      position: absolute;
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .title-monster-item:active { cursor: grabbing; }
+    .title-monster-item .inner { width: 100%; height: 100%; display:flex; align-items:center; justify-content:center; }
+    .title-menu-btn {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.18);
+      font-weight: 800;
+      font-size: 14px;
+    }
+    .title-menu-btn:hover { background: rgba(255,255,255,0.16); }
+
+    .dev-badge {
+      position: fixed;
+      right: 12px;
+      bottom: 12px;
+      z-index: 60;
+      padding: 6px 10px;
+      border-radius: 9999px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.9);
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      display: none;
+    }
+
+    .dev-badge {
+      position: fixed;
+      right: 12px;
+      bottom: 12px;
+      z-index: 60;
+      padding: 6px 10px;
+      border-radius: 9999px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.9);
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      display: none;
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+</head>
+
+<body class="h-full overflow-auto">
+  <div id="app" class="min-h-full w-full lab-bg relative overflow-hidden">
+
+    <!-- Lab background decorations -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute inset-0 lab-grid"></div>
+
+      <div class="absolute top-10 left-6 right-6 flex justify-between gap-6">
+        <div class="chalk-scribble text-[10px] leading-relaxed whitespace-pre">
+H2O  +  NaCl  →  Na⁺  +  Cl⁻
+濃度(%) = 溶質 ÷ 溶液 × 100
+F = kx   /   V = IR
+        </div>
+        <div class="chalk-scribble text-[10px] leading-relaxed whitespace-pre text-right">
+実験の注意：
+・ゴーグル着用
+・薬品は少量ずつ
+・火気厳禁
+        </div>
+      </div>
+
+      <div class="absolute top-24 right-6 w-28 h-28 rounded-2xl border border-white/15 bg-white/5 backdrop-blur-sm">
+        <div class="p-3">
+          <div class="text-white/55 text-[10px]">Element</div>
+          <div class="text-white font-black text-3xl">Fe</div>
+          <div class="text-white/55 text-[10px]">Iron • 26</div>
+        </div>
+      </div>
+
+      <div class="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-slate-900 to-transparent"></div>
+      <div class="absolute top-20 left-20 w-40 h-40 bg-blue-500 rounded-full opacity-5 blur-3xl"></div>
+      <div class="absolute bottom-32 right-10 w-56 h-56 bg-green-500 rounded-full opacity-5 blur-3xl"></div>
+      <div class="absolute top-1/3 left-1/2 w-32 h-32 bg-purple-500 rounded-full opacity-5 blur-2xl"></div>
+
+      <div class="bubble" style="width: 12px; height: 12px; top: 20%; left: 15%; animation-delay: 0s;"></div>
+      <div class="bubble" style="width: 8px; height: 8px; top: 40%; left: 25%; animation-delay: 0.5s;"></div>
+      <div class="bubble" style="width: 10px; height: 10px; top: 60%; right: 20%; animation-delay: 1s;"></div>
+
+      <svg class="absolute bottom-0 left-0 w-full h-32 opacity-10" viewBox="0 0 1000 200" preserveAspectRatio="xMidYMid slice">
+        <path d="M 100 150 L 100 50 L 80 50 L 80 150 Z" stroke="white" stroke-width="3" fill="none" />
+        <path d="M 200 150 L 180 80 L 220 80 Z" stroke="white" stroke-width="3" fill="none" />
+        <circle cx="150" cy="160" r="8" stroke="white" stroke-width="2" fill="none" />
+        <path d="M 300 150 L 300 100 Q 320 100 320 80 Q 320 60 300 60 L 300 150" stroke="white" stroke-width="3" fill="none" />
+        <rect x="400" y="80" width="50" height="70" stroke="white" stroke-width="2" fill="none" />
+        <line x1="425" y1="80" x2="425" y2="150" stroke="white" stroke-width="2" />
+        <path d="M 550 150 Q 550 100 530 80 Q 510 60 490 60 Q 470 60 450 80 Q 430 100 430 150" stroke="white" stroke-width="3" fill="none" />
+      </svg>
+    </div>
+
+    <!-- Main container -->
+    <div id="game-container" class="relative z-10 min-h-full flex flex-col items-center justify-center p-4">
+
+      <!-- START SCREEN -->
+      <div id="start-screen" class="w-full max-w-md text-center relative">
+        <!-- Title customization layer (drag to place) -->
+        <div id="title-custom-layer" class="absolute inset-0 z-30 pointer-events-none"></div>
+        <div id="title-item-menu" class="hidden fixed z-50 glass rounded-2xl p-2 text-white pointer-events-auto"></div>
+        <div class="relative z-10">
+        <h1 id="main-title" class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-300 to-cyan-300 mb-2 drop-shadow-lg">りかモン</h1>
+        <p class="text-white/70 text-sm mb-8">理科モンスター育成計算ゲーム</p>
+
+        <div class="relative mx-auto w-48 h-48 mb-8">
+          <div id="start-egg" class="monster-float">
+            <svg viewBox="0 0 100 120" class="w-full h-full drop-shadow-2xl">
+              <defs>
+                <linearGradient id="egg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#fef3c7" />
+                  <stop offset="50%" style="stop-color:#fcd34d" />
+                  <stop offset="100%" style="stop-color:#f59e0b" />
+                </linearGradient>
+                <filter id="egg-shadow">
+                  <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000" flood-opacity="0.3" />
+                </filter>
+              </defs>
+              <ellipse cx="50" cy="65" rx="40" ry="50" fill="url(#egg-grad)" filter="url(#egg-shadow)" />
+              <ellipse cx="50" cy="50" rx="30" ry="35" fill="rgba(255,255,255,0.3)" />
+              <text x="50" y="75" text-anchor="middle" font-size="24">🥚</text>
+            </svg>
+          </div>
+          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-32 h-4 bg-black/20 rounded-full blur-sm"></div>
+        </div>
+
+        <div id="stats-display" class="glass rounded-2xl p-4 mb-6">
+          <div class="flex justify-around text-white">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-yellow-300" id="unlocked-count">0</div>
+              <div class="text-xs opacity-70">図鑑</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-green-300" id="total-accuracy">-%</div>
+              <div class="text-xs opacity-70">正答率</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-cyan-300" id="total-solved">0</div>
+              <div class="text-xs opacity-70">総問題数</div>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="showGenreSelect()" class="btn-3d w-full py-4 px-8 bg-gradient-to-r from-green-400 to-emerald-500 text-white text-xl font-bold rounded-2xl mb-4 hover:from-green-500 hover:to-emerald-600">🎮 育成スタート！</button>
+        <button onclick="showZukan()" class="btn-3d w-full py-3 px-8 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-2xl hover:from-purple-600 hover:to-pink-600">📖 図鑑を見る</button>
+
+        <div class="glass rounded-2xl p-4 mt-6 text-left text-white/90 leading-relaxed">
+          <div class="font-bold mb-2">🧪 ようこそ！りかモン研究所へ！</div>
+          <div>
+            キミは理科の計算でモンスターを育てる 「りかモントレーナー」だ！<br>
+            計算問題に挑戦してエネルギーをため、 モンスターをどんどん進化させよう！<br>
+            速く正確に解くと、 レアモンスターに進化するチャンスUP！✨<br>
+            たくさん育てて、 図鑑コンプリートを目指そう！📖🔥<br>
+            まずは卵からスタートしよう！🥚
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <!-- GENRE SELECT SCREEN -->
+      <div id="genre-screen" class="hidden w-full max-w-md text-center">
+        <h2 class="text-3xl font-bold text-white mb-2">ジャンルを選ぼう！</h2>
+        <p class="text-white/60 text-sm mb-8">選んだジャンルで属性が決まるよ</p>
+
+        <div class="space-y-4">
+          <button onclick="selectGenre('water')" class="btn-3d w-full py-5 px-6 bg-gradient-to-r from-blue-400 to-cyan-500 text-white rounded-2xl flex items-center gap-4 hover:from-blue-500 hover:to-cyan-600">
+            <span class="text-4xl">💧</span>
+            <div class="text-left">
+              <div class="font-bold text-lg">水タイプ</div>
+              <div class="text-sm opacity-80">質量パーセント濃度</div>
+            </div>
+          </button>
+
+          <button onclick="selectGenre('fighting')" class="btn-3d w-full py-5 px-6 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-2xl flex items-center gap-4 hover:from-orange-500 hover:to-red-600">
+            <span class="text-4xl">💪</span>
+            <div class="text-left">
+              <div class="font-bold text-lg">格闘タイプ</div>
+              <div class="text-sm opacity-80">フックの法則</div>
+            </div>
+          </button>
+
+          <button onclick="selectGenre('electric')" class="btn-3d w-full py-5 px-6 bg-gradient-to-r from-yellow-400 to-amber-500 text-white rounded-2xl flex items-center gap-4 hover:from-yellow-500 hover:to-amber-600">
+            <span class="text-4xl">⚡</span>
+            <div class="text-left">
+              <div class="font-bold text-lg">電気タイプ</div>
+              <div class="text-sm opacity-80">オームの法則</div>
+            </div>
+          </button>
+        </div>
+
+        <button onclick="showStart()" class="mt-6 text-white/60 hover:text-white underline">← もどる</button>
+      </div>
+
+      <!-- QUESTION SCREEN -->
+      <div id="question-screen" class="hidden w-full max-w-5xl">
+        <div class="flex justify-between items-center mb-4 px-2">
+          <div class="flex items-center gap-3">
+            <div class="text-white/80 text-sm">正解 <span id="q-progress-correct">0</span>/4</div>
+            <div id="q-life" class="flex items-center gap-1" aria-label="ライフ"></div>
+            <div id="q-evo-remaining" class="text-white/80 text-sm font-bold"></div>
+          </div>
+          <div id="q-type-badge" class="px-3 py-1 rounded-full text-sm font-bold text-white bg-blue-500">💧 水タイプ</div>
+        </div>
+
+        <!-- Two-column layout: Left = Monster, Right = Question -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+
+          <!-- LEFT: Monster big + name -->
+          <div class="glass rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center">
+            <div class="relative w-full flex items-center justify-center">
+              <div id="q-monster" class="monster-float monster-glow w-full flex items-center justify-center"></div>
+            </div>
+            <div id="q-monster-name" class="mt-4 text-2xl md:text-3xl font-black text-yellow-300 drop-shadow-lg text-center"></div>
+          </div>
+
+          <!-- RIGHT: Question -->
+          <div class="glass rounded-2xl p-4 md:p-6 flex flex-col">
+            <div id="question-text" class="text-white text-lg leading-relaxed mb-4"></div>
+
+            <div id="hint-area" class="hidden bg-yellow-500/20 rounded-xl p-3 mb-4 border border-yellow-400/30">
+              <div class="text-yellow-300 text-sm">💡 ヒント</div>
+              <div id="hint-text" class="text-white/90 text-sm mt-1"></div>
+            </div>
+
+            <div class="flex gap-2 items-center mb-4">
+              <input type="number" id="answer-input" class="flex-1 px-4 py-3 rounded-xl bg-white/10 border-2 border-white/20 text-white text-xl text-center focus:border-yellow-400 focus:outline-none" placeholder="答えを入力">
+              <span id="answer-unit" class="text-white text-lg">%</span>
+            </div>
+
+            <div class="flex gap-3 mt-auto">
+              <button id="hint-btn" onclick="showHint()" class="btn-3d flex-1 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-white font-bold rounded-xl hover:from-yellow-600 hover:to-amber-600">💡 ヒント</button>
+              <button onclick="submitAnswer()" class="btn-3d flex-2 py-3 px-8 bg-gradient-to-r from-green-400 to-emerald-500 text-white font-bold rounded-xl hover:from-green-500 hover:to-emerald-600">✓ 回答する</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RESULT SCREEN -->
+      <div id="result-screen" class="hidden w-full max-w-md text-center">
+        <div id="result-icon" class="text-8xl mb-4"></div>
+        <div id="result-title" class="text-3xl font-bold text-white mb-2"></div>
+        <div id="result-message" class="text-white/70 mb-6"></div>
+        <div id="result-detail" class="glass rounded-2xl p-4 mb-4">
+          <div class="text-white/60 text-sm mb-2">正解</div>
+          <div id="correct-answer" class="text-3xl font-bold text-yellow-300"></div>
+        </div>
+        <div id="explanation-area" class="glass rounded-2xl p-4 mb-6 border-l-4 border-yellow-400 hidden">
+          <div class="text-yellow-300 text-sm font-bold mb-2">📝 解説</div>
+          <div id="explanation-text" class="text-white/90 text-sm leading-relaxed whitespace-pre-line"></div>
+        </div>
+        <button id="result-next-btn" onclick="nextQuestion()" class="btn-3d w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xl font-bold rounded-2xl hover:from-blue-600 hover:to-indigo-600">次へ進む →</button>
+      </div>
+
+      <!-- GAME OVER SCREEN -->
+      <div id="gameover-screen" class="hidden w-full max-w-md text-center">
+        <div class="text-7xl mb-4">🧪💥</div>
+        <div class="text-3xl font-black text-red-300 mb-2">今回はここまで！</div>
+        <p class="text-white/70 mb-6">ライフが0になったため、エネルギー切れです。卵からやり直そう！</p>
+        <div class="glass rounded-2xl p-4 mb-6">
+          <div class="text-white/60 text-sm mb-2">今回の結果</div>
+          <div class="flex justify-around text-white">
+            <div class="text-center">
+              <div class="text-xl font-bold text-green-300" id="gameover-correct">0</div>
+              <div class="text-xs opacity-70">正解</div>
+            </div>
+            <div class="text-center">
+              <div class="text-xl font-bold text-red-300" id="gameover-wrong">0</div>
+              <div class="text-xs opacity-70">不正解</div>
+            </div>
+          </div>
+        </div>
+        <button onclick="createNewEgg()" class="btn-3d w-full py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xl font-bold rounded-2xl mb-3">🥚 卵に戻る</button>
+        <button onclick="showStart()" class="text-white/60 hover:text-white underline">スタートへ</button>
+      </div>
+
+      <!-- EVOLUTION SCREEN -->
+      <div id="evolution-screen" class="hidden w-full max-w-md text-center">
+        <div id="evo-title" class="text-3xl font-bold text-white mb-8">進化中...</div>
+
+        <div id="evo-stage-wrap" class="relative mx-auto w-80 h-80 md:w-96 md:h-96 mb-8">
+          <!-- Ultimate special overlay (shown only when evolving into ultimate) -->
+          <div id="evo-ultimate" class="ultimate-overlay hidden">
+            <div class="crown"></div>
+            <div class="sigil"></div>
+            <div class="starfield"></div>
+          </div>
+          <div class="rainbow-ring" id="evo-rainbow"></div>
+          <div class="evo-energy" id="evo-energy"></div>
+          <div class="evo-sweep" id="evo-sweep"></div>
+          <div class="evo-particles" id="evo-particles"></div>
+          <div id="evo-monster-before" class="absolute inset-0 flex items-center justify-center"></div>
+          <div id="evo-monster-after" class="absolute inset-0 flex items-center justify-center opacity-0"></div>
+
+          <div class="sparkle top-0 left-1/2 text-yellow-300">✨</div>
+          <div class="sparkle top-1/4 right-0 text-pink-300" style="animation-delay: 0.2s">✨</div>
+          <div class="sparkle bottom-1/4 right-1/4 text-cyan-300" style="animation-delay: 0.4s">✨</div>
+          <div class="sparkle bottom-0 left-1/4 text-green-300" style="animation-delay: 0.6s">✨</div>
+          <div class="sparkle top-1/4 left-0 text-purple-300" style="animation-delay: 0.8s">✨</div>
+
+          <div class="sparkle top-10 right-10 text-yellow-200" style="animation-delay: 0.15s">✦</div>
+          <div class="sparkle bottom-10 left-10 text-cyan-200" style="animation-delay: 0.35s">✦</div>
+        </div>
+
+        <div id="evo-stage" class="text-xl text-yellow-300 font-bold mb-4"></div>
+        <div id="evo-name" class="text-2xl text-white font-bold mb-8"></div>
+        <button id="evo-continue-btn" onclick="continueAfterEvolution()" class="hidden btn-3d w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xl font-bold rounded-2xl">続ける →</button>
+      </div>
+
+      <!-- COMPLETE SCREEN -->
+      <div id="complete-screen" class="hidden w-full max-w-md text-center">
+        <div class="text-6xl mb-4">🎉</div>
+        <h2 id="complete-title" class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-pink-300 mb-2">完全体に進化！</h2>
+        <p class="text-white/70 mb-8">おめでとう！図鑑に登録されたよ</p>
+        <div class="relative mx-auto w-80 h-80 md:w-96 md:h-96 mb-6">
+          <div id="complete-monster" class="monster-float monster-glow"></div>
+        </div>
+        <div id="complete-name" class="text-2xl font-bold text-yellow-300 mb-6"></div>
+        <div class="glass rounded-2xl p-4 mb-6">
+          <div class="text-white/60 text-sm mb-2">今回の成績</div>
+          <div class="flex justify-around text-white">
+            <div class="text-center">
+              <div class="text-xl font-bold text-green-300" id="cycle-accuracy">100%</div>
+              <div class="text-xs opacity-70">正答率</div>
+            </div>
+            <div class="text-center">
+              <div class="text-xl font-bold text-cyan-300" id="cycle-questions">12</div>
+              <div class="text-xs opacity-70">問題数</div>
+            </div>
+          </div>
+        </div>
+        <button onclick="createNewEgg()" class="btn-3d w-full py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xl font-bold rounded-2xl mb-4">🥚 卵をつくる</button>
+        <button onclick="showStart()" class="text-white/60 hover:text-white underline">スタートに戻る</button>
+      </div>
+
+      <!-- ZUKAN SCREEN -->
+      <div id="zukan-screen" class="hidden w-full max-w-2xl">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-3xl font-bold text-white">📖 図鑑</h2>
+          <button onclick="showStart()" class="text-white/60 hover:text-white">← もどる</button>
+        </div>
+        <div id="zukan-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-4"></div>
+      </div>
+
+    </div>
+
+    <!-- Monster detail modal -->
+    <div id="monster-detail-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/60" onclick="closeMonsterDetail()"></div>
+      <div class="relative w-full max-w-md glass rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-white font-bold">モンスター詳細</div>
+          <button class="text-white/70 hover:text-white" onclick="closeMonsterDetail()">✕</button>
+        </div>
+
+        <div class="flex flex-col items-center gap-3 mb-4">
+          <div id="detail-monster" class="w-60 h-60 md:w-72 md:h-72 rounded-2xl bg-white/10 flex items-center justify-center overflow-hidden"></div>
+          <div class="text-center">
+            <div id="detail-name" class="text-2xl font-black text-white">---</div>
+            <div class="text-white/70 text-sm">
+              <span id="detail-stage"></span>
+              <span class="mx-1">•</span>
+              <span id="detail-type"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white/10 rounded-xl p-3">
+          <div class="text-white/70 text-xs mb-1">説明</div>
+          <div id="detail-description" class="text-white text-sm leading-relaxed whitespace-pre-line"></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
+          <button class="btn-3d w-full py-3 bg-gradient-to-r from-emerald-500 to-green-500 text-white font-bold rounded-xl" onclick="addToTitleFromDetail()">🏷️ タイトル画面へ追加</button>
+          <button class="btn-3d w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-xl" onclick="closeMonsterDetail()">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="dev-badge" class="dev-badge">storage: -</div>
+
+  </div>
+
+  <script>
+    // ============================================
+    // りかモン - Game Logic
+    // ============================================
+
+    const defaultConfig = {
+      game_title: 'りかモン',
+      primary_color: '#4f46e5',
+      secondary_color: '#ec4899',
+      background_color: '#1e1b4b',
+      text_color: '#ffffff',
+      accent_color: '#fbbf24'
+    };
+
+    // ============================================
+// Monster images (大量取り込み向け)
+// ============================================
+// いちばん簡単：公開するサイトに /images フォルダを置き、
+// ファイル名を「モンスターキー」と同じにするだけ。
+// 例: images/baby_water.png, images/perfect_electric_speed.png
+// すると AUTO_IMAGE_NAMING=true のとき自動で読み込みます。
+//
+// さらに通信を減らしたい場合は images/manifest.json を置いてください。
+// manifest.json の例：
+// {
+//   "baby_water": "baby_water.png",
+//   "growth_water_accuracy": "growth_water_accuracy.webp"
+// }
+//
+// 手動でURLを差し込む場合は MONSTER_IMAGE_OVERRIDES に書いてOK。
+const IMAGE_BASE_PATH = './images/';
+const IMAGE_MANIFEST_URL = IMAGE_BASE_PATH + 'manifest.json';
+const AUTO_IMAGE_NAMING = true;
+
+const MONSTER_IMAGE_OVERRIDES =  {
+"baby_fighting": "https://image2url.com/r2/default/images/1771984042687-86dac35c-9fd6-4cef-b69a-b379f9564bd3.png",
+      "growth_fighting": "https://image2url.com/r2/default/images/1771984097501-0518af65-813a-400f-8df1-d0e632973fa7.png",
+      "mature_fighting_accuracy": "https://image2url.com/r2/default/images/1771984128472-1de5acbf-d935-4e9f-9464-e077871cdf2a.png",
+      "mature_fighting_balance": "https://image2url.com/r2/default/images/1771984156428-89825e7e-8a3e-4b86-8517-1ee6f44b3199.png",
+      "mature_fighting_speed": "https://image2url.com/r2/default/images/1771984176531-21ced7c9-32b3-4512-982c-ea5ade0b41ce.png",
+      "perfect_fighting_accuracy": "https://image2url.com/r2/default/images/1771984253015-9aded1d9-edc4-4813-bf32-15284bc165f7.png",
+      "perfect_fighting_balance": "https://image2url.com/r2/default/images/1771984275675-43fcb4e5-c1c4-4b4c-b498-e8b89d704de0.png",
+      "perfect_fighting_speed": "https://image2url.com/r2/default/images/1771984296510-c4db1127-8039-468d-8f99-a790376d0503.png",
+      "ultimate_fighting_accuracy": "https://image2url.com/r2/default/images/1771984319657-ba68776d-c77f-4fce-8cf0-cda010a70b9d.png",
+      "ultimate_fighting_balance": "https://image2url.com/r2/default/images/1771984421992-81b1415c-351d-4207-9ee8-deb618277f22.png",
+      "ultimate_fighting_speed": "https://image2url.com/r2/default/images/1771984499980-00bf23b1-e1f9-4f0c-873c-a559eb5a5788.png",
+        "baby_water": "https://image2url.com/r2/default/images/1772052961365-6c1f16ee-b0ce-42f8-b0bd-055c01255582.png",
+  "baby_water": "https://image2url.com/r2/default/images/1772052961365-6c1f16ee-b0ce-42f8-b0bd-055c01255582.png",
+  "growth_water": "https://image2url.com/r2/default/images/1772052997810-f5d03541-f93d-493c-af50-c7fb46b6bc68.png",
+  "mature_water_accuracy": "https://image2url.com/r2/default/images/1772053023058-243b9003-b781-4c9a-a29c-5635cf902da8.png",
+  "mature_water_balance": "https://image2url.com/r2/default/images/1772053090389-4afcaa95-3277-4397-898b-7e6579d63711.png",
+  "mature_water_speed": "https://image2url.com/r2/default/images/1772053113781-cc88db56-5cc0-42b4-a47f-e69133e559b8.png",
+  "perfect_water_accuracy": "https://image2url.com/r2/default/images/1772053135543-e8484efd-ffff-48ba-9bd7-b9b25db9236c.png",
+  "perfect_water_balance": "https://image2url.com/r2/default/images/1772053170285-3e4439da-d6c2-4762-a1af-f7a874e135e2.png",
+  "perfect_water_speed": "https://image2url.com/r2/default/images/1772053188423-0d15c695-5c3f-4744-881d-1266bd03c913.png",
+  "ultimate_water_accuracy": "https://image2url.com/r2/default/images/1772053208009-98d02e23-8751-498c-b7ba-e787fade6443.png",
+  "ultimate_water_balance": "https://image2url.com/r2/default/images/1772053258584-d5fcb244-3ff5-4527-9246-db2695ebb099.png",
+  "ultimate_water_speed": "https://image2url.com/r2/default/images/1772053284796-a18c69f2-7436-41df-9c75-0b6ad7170456.png",
+"baby_electric": "https://image2url.com/r2/default/images/1772110757407-907b4444-1991-42e5-bbc0-b5f27ec418d2.png",
+  "growth_electric": "https://image2url.com/r2/default/images/1772110778066-1e994031-8da1-46a4-944f-f8fb6b486ed1.png",
+  "mature_electric_accuracy": "https://image2url.com/r2/default/images/1772110796024-c653e00f-d353-4efd-87d1-8917a5bb68b2.png",
+  "mature_electric_balance": "https://image2url.com/r2/default/images/1772110815929-73964329-1507-453d-96c9-42d491f45371.png",
+  "mature_electric_speed": "https://image2url.com/r2/default/images/1772110837545-7c0834cd-90e6-47b8-b9c8-65dd51643ff1.png",
+  "perfect_electric_accuracy": "https://image2url.com/r2/default/images/1772110852171-7a578cbb-b8f8-4477-b87f-f90f30704657.png",
+  "perfect_electric_balance": "https://image2url.com/r2/default/images/1772110869078-5f835366-9ff8-4338-9474-f476a5918528.png",
+  "perfect_electric_speed": "https://image2url.com/r2/default/images/1772110919734-8fbfff14-ae2f-4b6b-9eb1-151f3cf82ab1.png",
+  "ultimate_electric_accuracy": "https://image2url.com/r2/default/images/1772110937794-52fc9750-a819-403c-b876-ac858ca74ecd.png",
+  "ultimate_electric_balance": "https://image2url.com/r2/default/images/1772110952461-115e8bf5-f02f-4292-ab46-b174dee245b2.png",
+  "ultimate_electric_speed": "https://image2url.com/r2/default/images/1772111017897-7f6683ac-5c1d-460d-8fef-7d9859298e2b.png"
+}; // { monsterKey: 'https://...' or './images/xxx.png' }
+let imageManifestLoaded = false;
+
+    // Monster definitions
+    const MONSTERS = {
+      egg: { name: 'タマゴ', stage: 'egg', emoji: '🥚', color: '#fcd34d' },
+
+      baby_water: { name: 'アクアベビー', stage: 'baby', type: 'water', emoji: '💧', color: '#60a5fa' },
+      baby_fighting: { name: 'ファイトベビー', stage: 'baby', type: 'fighting', emoji: '👊', color: '#f97316' },
+      baby_electric: { name: 'スパークベビー', stage: 'baby', type: 'electric', emoji: '⚡', color: '#facc15' },
+
+      // 成長期（分岐なし）
+      growth_water: { name: 'アクアビアル', stage: 'growth', type: 'water', emoji: '🌊', color: '#3b82f6' },
+      growth_fighting: { name: 'コイルパップ', stage: 'growth', type: 'fighting', emoji: '🔥', color: '#ef4444' },
+      growth_electric: { name: 'バッテリドレイク', stage: 'growth', type: 'electric', emoji: '🌟', color: '#eab308' },
+
+      // 成熟期（水）
+      mature_water_accuracy: { name: 'ケミカルシェルター', stage: 'mature', type: 'water', variant: 'accuracy', emoji: '🐋', color: '#2563eb' },
+      mature_water_speed: { name: 'ラブリシール', stage: 'mature', type: 'water', variant: 'speed', emoji: '🦈', color: '#0891b2' },
+      mature_water_balance: { name: 'アクア・バースト', stage: 'mature', type: 'water', variant: 'balance', emoji: '🐬', color: '#0284c7' },
+
+      // 成熟期（格闘）
+      mature_fighting_accuracy: { name: 'フルール・バウンサー', stage: 'mature', type: 'fighting', variant: 'accuracy', emoji: '🦁', color: '#dc2626' },
+      mature_fighting_speed: { name: 'オーラ・ストライカー', stage: 'mature', type: 'fighting', variant: 'speed', emoji: '🐯', color: '#ea580c' },
+      mature_fighting_balance: { name: 'マッシブ・コイラー', stage: 'mature', type: 'fighting', variant: 'balance', emoji: '🦅', color: '#f97316' },
+
+      // 成熟期（電気）
+      mature_electric_accuracy: { name: 'エンジェル・ボルテージ', stage: 'mature', type: 'electric', variant: 'accuracy', emoji: '🦄', color: '#ca8a04' },
+      mature_electric_speed: { name: 'グリッド・ナイトメア', stage: 'mature', type: 'electric', variant: 'speed', emoji: '🐉', color: '#eab308' },
+      mature_electric_balance: { name: 'ボルテクス・レックス', stage: 'mature', type: 'electric', variant: 'balance', emoji: '🦋', color: '#fbbf24' },
+
+      // 完全体（水）
+      perfect_water_accuracy: { name: 'アクア・ジェネシス', stage: 'perfect', type: 'water', variant: 'accuracy', emoji: '🔱', color: '#1d4ed8' },
+      perfect_water_speed: { name: 'サイバー・ラブリシール', stage: 'perfect', type: 'water', variant: 'speed', emoji: '🌊', color: '#0e7490' },
+      perfect_water_balance: { name: 'ヘヴィ・ベッセル', stage: 'perfect', type: 'water', variant: 'balance', emoji: '👑', color: '#0369a1' },
+
+      // 完全体（格闘）
+      perfect_fighting_accuracy: { name: 'パッチワーク・バタリアン', stage: 'perfect', type: 'fighting', variant: 'accuracy', emoji: '🌋', color: '#b91c1c' },
+      perfect_fighting_speed: { name: 'スプリング・セイント', stage: 'perfect', type: 'fighting', variant: 'speed', emoji: '🐦‍🔥', color: '#c2410c' },
+      perfect_fighting_balance: { name: 'アイアン・ウォーデン', stage: 'perfect', type: 'fighting', variant: 'balance', emoji: '👑', color: '#ea580c' },
+
+      // 完全体（電気）
+      perfect_electric_accuracy: { name: 'エターナル・カムイ', stage: 'perfect', type: 'electric', variant: 'accuracy', emoji: '⚡', color: '#a16207' },
+      perfect_electric_speed: { name: 'テンペスト・ハザード', stage: 'perfect', type: 'electric', variant: 'speed', emoji: '🐲', color: '#ca8a04' },
+      perfect_electric_balance: { name: 'ライデン・サイバティクス', stage: 'perfect', type: 'electric', variant: 'balance', emoji: '👑', color: '#eab308' },
+
+      // 究極体（水）
+      ultimate_water_accuracy: { name: 'アーク・オケアノス', stage: 'ultimate', type: 'water', variant: 'accuracy', emoji: '🌌', color: '#1e40af' },
+      ultimate_water_speed: { name: 'クリスタル・パレス', stage: 'ultimate', type: 'water', variant: 'speed', emoji: '🌀', color: '#155e75' },
+      ultimate_water_balance: { name: 'トライデントレガリア', stage: 'ultimate', type: 'water', variant: 'balance', emoji: '👑', color: '#0c4a6e' },
+
+      // 究極体（格闘）
+      ultimate_fighting_accuracy: { name: 'パンドラ・トイ・キングダム', stage: 'ultimate', type: 'fighting', variant: 'accuracy', emoji: '☄️', color: '#7f1d1d' },
+      ultimate_fighting_speed: { name: 'センジュ・コイル・デヴァ', stage: 'ultimate', type: 'fighting', variant: 'speed', emoji: '🌠', color: '#9a3412' },
+      ultimate_fighting_balance: { name: 'タイタン・スプリング・デウス', stage: 'ultimate', type: 'fighting', variant: 'balance', emoji: '👑', color: '#c2410c' },
+
+      // 究極体（電気）
+      ultimate_electric_accuracy: { name: 'ヘヴンズ・オーム・セラフィム', stage: 'ultimate', type: 'electric', variant: 'accuracy', emoji: '⚡', color: '#713f12' },
+      ultimate_electric_speed: { name: 'ヴォルテック・ストーム', stage: 'ultimate', type: 'electric', variant: 'speed', emoji: '🌩️', color: '#854d0e' },
+      ultimate_electric_balance: { name: 'デウス・エクス・ケラウノス', stage: 'ultimate', type: 'electric', variant: 'balance', emoji: '👑', color: '#a16207' }
+    };
+
+
+    // ============================================
+    // State
+    // ============================================
+
+    let gameState = {
+      currentStage: 'egg',
+      currentType: null,
+      currentVariant: null,
+      totalCorrect: 0,
+      totalQuestions: 0,
+      cycleCorrect: 0,
+      cycleQuestions: 0,
+      cycleHintUsed: 0,
+      phaseCorrect: 0,
+      phaseQuestions: 0,
+      phaseHintUsed: 0,
+      phaseStartTime: null, // 4問正解までの経過時間（スピード進化判定用）
+      unlockedMonsters: ['egg'],
+      currentQuestion: null,
+      hintShown: false,
+      life: 3,
+      gameOver: false,
+
+      // タイトル画面カスタム配置
+      // 配列: [{ id, key, x, y, scale }]
+      titleLayout: []
+    };
+
+    let currentData = [];
+    let config = { ...defaultConfig };
+
+    // ============================================
+    // Robust Storage Adapter (FIX: window.dataSdk may be undefined)
+    // ============================================
+
+    const STORAGE_KEY = 'rikamon_save_v1';
+    const storageStatus = {
+      mode: 'none',
+      ready: false
+    };
+
+    function setDevBadge(text) {
+      const badge = document.getElementById('dev-badge');
+      if (!badge) return;
+      const show = new URLSearchParams(location.search).has('dev');
+      badge.style.display = show ? 'block' : 'none';
+      badge.textContent = text;
+    }
+
+    function safeJsonParse(str, fallback) {
+      try { return JSON.parse(str); } catch { return fallback; }
+    }
+
+    function makeLocalStorageAdapter() {
+      return {
+        kind: 'localStorage',
+        async init(handler) {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          const parsed = raw ? safeJsonParse(raw, null) : null;
+          const list = parsed ? [parsed] : [];
+          handler?.onDataChanged?.(list);
+          return { isOk: true };
+        },
+        async create(obj) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+          currentData = [obj];
+          return { isOk: true };
+        },
+        async update(obj) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+          currentData = [obj];
+          return { isOk: true };
+        }
+      };
+    }
+
+    function makeNoopAdapter() {
+      return {
+        kind: 'memory',
+        async init(handler) {
+          handler?.onDataChanged?.([]);
+          return { isOk: true };
+        },
+        async create(obj) { currentData = [obj]; return { isOk: true }; },
+        async update(obj) { currentData = [obj]; return { isOk: true }; }
+      };
+    }
+
+    function makeDataSdkAdapter() {
+      // window.dataSdk may exist but be partially initialized.
+      const ds = window.dataSdk;
+      const ok = ds && typeof ds.init === 'function' && typeof ds.create === 'function' && typeof ds.update === 'function';
+      if (!ok) return null;
+      return {
+        kind: 'dataSdk',
+        async init(handler) {
+          const res = await ds.init(handler);
+          return res;
+        },
+        async create(obj) { return await ds.create(obj); },
+        async update(obj) { return await ds.update(obj); }
+      };
+    }
+
+    let storage = makeNoopAdapter();
+
+    const dataHandler = {
+      onDataChanged(data) {
+        currentData = Array.isArray(data) ? data : [];
+        if (currentData.length > 0) {
+          const save = currentData[0];
+          gameState.currentStage = save.current_stage || 'egg';
+          gameState.currentType = save.current_type || null;
+          gameState.currentVariant = save.current_variant || null;
+          gameState.totalCorrect = save.total_correct || 0;
+          gameState.totalQuestions = save.total_questions || 0;
+          gameState.unlockedMonsters = save.unlocked_monsters ? String(save.unlocked_monsters).split(',') : ['egg'];
+          // restore title layout if present
+          gameState.titleLayout = safeJsonParse(save.title_layout_json || '[]', []) || [];
+          // restore cycle stats if present
+          gameState.cycleCorrect = save.cycle_correct || 0;
+          gameState.cycleQuestions = save.cycle_questions || 0;
+          gameState.cycleHintUsed = save.hint_used_count || 0;
+        }
+        updateStatsDisplay();
+      }
+    };
+
+    async function initStorage() {
+      // Prefer dataSdk, else localStorage, else memory.
+      const dsAdapter = makeDataSdkAdapter();
+      if (dsAdapter) {
+        storage = dsAdapter;
+        const res = await storage.init(dataHandler);
+        if (res && res.isOk) {
+          storageStatus.mode = 'dataSdk';
+          storageStatus.ready = true;
+          setDevBadge('storage: dataSdk ✅');
+          return;
+        }
+        console.warn('Data SDK init failed; falling back to localStorage');
+      }
+
+      // localStorage fallback
+      if (typeof localStorage !== 'undefined') {
+        storage = makeLocalStorageAdapter();
+        await storage.init(dataHandler);
+        storageStatus.mode = 'localStorage';
+        storageStatus.ready = true;
+        setDevBadge('storage: localStorage ✅');
+        return;
+      }
+
+      // last resort
+      storage = makeNoopAdapter();
+      await storage.init(dataHandler);
+      storageStatus.mode = 'memory';
+      storageStatus.ready = true;
+      setDevBadge('storage: memory ⚠️');
+    }
+
+    async function saveGameState() {
+      // FIX: never assume window.dataSdk exists.
+      if (!storageStatus.ready) return;
+      if (currentData.length >= 999) {
+        console.error('Data limit reached');
+        return;
+      }
+
+      const saveData = {
+        player_id: 'player1',
+        current_stage: gameState.currentStage,
+        current_type: gameState.currentType || '',
+        current_variant: gameState.currentVariant || '',
+        total_correct: gameState.totalCorrect,
+        total_questions: gameState.totalQuestions,
+        cycle_correct: gameState.cycleCorrect,
+        cycle_questions: gameState.cycleQuestions,
+        hint_used_count: gameState.cycleHintUsed,
+        unlocked_monsters: gameState.unlockedMonsters.join(','),
+        title_layout_json: JSON.stringify(gameState.titleLayout || []),
+        created_at: new Date().toISOString()
+      };
+
+      try {
+        if (currentData.length > 0) {
+          const existing = currentData[0];
+          const updated = { ...existing, ...saveData };
+          await storage.update(updated);
+        } else {
+          await storage.create(saveData);
+        }
+      } catch (e) {
+        console.error('Save failed:', e);
+      }
+    }
+
+    // ============================================
+    // Element SDK Integration
+    // ============================================
+
+    async function initElementSdk() {
+      if (!window.elementSdk) return;
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (newConfig) => {
+          config = { ...config, ...newConfig };
+          applyConfig();
+        },
+        mapToCapabilities: (cfg) => ({
+          recolorables: [
+            { get: () => cfg.background_color || defaultConfig.background_color, set: (v) => { cfg.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+            { get: () => cfg.primary_color || defaultConfig.primary_color, set: (v) => { cfg.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); } },
+            { get: () => cfg.secondary_color || defaultConfig.secondary_color, set: (v) => { cfg.secondary_color = v; window.elementSdk.setConfig({ secondary_color: v }); } },
+            { get: () => cfg.text_color || defaultConfig.text_color, set: (v) => { cfg.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+            { get: () => cfg.accent_color || defaultConfig.accent_color, set: (v) => { cfg.accent_color = v; window.elementSdk.setConfig({ accent_color: v }); } }
+          ],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (cfg) => new Map([
+          ['game_title', cfg.game_title || defaultConfig.game_title]
+        ])
+      });
+    }
+
+    function applyConfig() {
+      const title = document.getElementById('main-title');
+      if (title) title.textContent = config.game_title || defaultConfig.game_title;
+    }
+
+    // ============================================
+    // Image manifest loader
+    // ============================================
+
+    async function loadImageManifest() {
+      // なくても動く（絵文字フォールバック）ので失敗してもOK
+      try {
+        const res = await fetch(IMAGE_MANIFEST_URL, { cache: 'no-cache' });
+        if (!res.ok) {
+          imageManifestLoaded = false;
+          return;
+        }
+        const json = await res.json();
+        if (json && typeof json === 'object') {
+          Object.entries(json).forEach(([key, filenameOrUrl]) => {
+            if (!key) return;
+            if (typeof filenameOrUrl !== 'string') return;
+            // manifest は相対ファイル名でもOK
+            const v = filenameOrUrl.startsWith('http') || filenameOrUrl.startsWith('./') || filenameOrUrl.startsWith('/')
+              ? filenameOrUrl
+              : (IMAGE_BASE_PATH + filenameOrUrl);
+            MONSTER_IMAGE_OVERRIDES[key] = v;
+          });
+          imageManifestLoaded = true;
+        }
+      } catch (e) {
+        imageManifestLoaded = false;
+      }
+    }
+
+    // ============================================
+    // Image Preloader (Google Sites / 大量画像の表示を速く)
+    // ============================================
+
+    async function preloadMonsterImages() {
+      // 404を大量に出さないため：manifest or override があるもの中心に先読み
+      const urls = new Set();
+
+      for (const key of Object.keys(MONSTERS)) {
+        const override = MONSTER_IMAGE_OVERRIDES[key];
+        if (override) urls.add(override);
+
+        const def = MONSTERS[key];
+        if (def && typeof def.img === 'string' && def.img) urls.add(def.img);
+
+        // 自動命名は manifest が読み込めているときだけ先読み（404連発防止）
+        if (AUTO_IMAGE_NAMING && imageManifestLoaded) {
+          urls.add(IMAGE_BASE_PATH + key + '.png');
+        }
+      }
+
+      const list = [...urls].filter(Boolean);
+      if (list.length === 0) return;
+
+      // 先読み（失敗してもゲームは絵文字で動く）
+      await Promise.all(
+        list.map((url) => new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(false);
+          img.src = url;
+        }))
+      );
+    }
+
+    // ============================================
+    // Question Generation
+    // ============================================
+
+    function generateQuestion(type) {
+      switch(type) {
+        case 'water': return generateConcentrationQuestion();
+        case 'fighting': return generateHookQuestion();
+        case 'electric': return generateOhmQuestion();
+        default: return generateConcentrationQuestion();
+      }
+    }
+
+    function generateConcentrationQuestion() {
+      // 濃度問題を3種類からランダム出題
+      // ①濃度を求める
+      // ②溶質を求める
+      // ③溶液を求める
+      // 答えは
+      // ・1桁整数(1〜9)
+      // ・または10刻み(10,20,30...)
+
+      const types = ['find_percent','find_solute','find_solution'];
+      const type = types[Math.floor(Math.random()*types.length)];
+
+      let solute, solution, percent, answer, question, hint;
+
+      do {
+        percent = (Math.floor(Math.random()*9)+1)*10; // 10〜90
+        solution = (Math.floor(Math.random()*9)+2)*10; // 20〜100
+        solute = solution * percent / 100;
+
+        if(type === 'find_percent'){
+          answer = percent;
+          question = `${solution}gの水溶液に${solute}gの溶質が溶けている。この水溶液の濃度は何％？`;
+          hint = `濃度(%) = 溶質 ÷ 溶液 × 100
+= ${solute} ÷ ${solution} × 100`;
+        }
+
+        if(type === 'find_solute'){
+          answer = solute;
+          question = `${percent}%の水溶液を${solution}g作るには、溶質は何g必要？`;
+          hint = `溶質 = 溶液 × 濃度 ÷ 100
+= ${solution} × ${percent} ÷ 100`;
+        }
+
+        if(type === 'find_solution'){
+          answer = solution;
+          question = `${percent}%の水溶液で溶質が${solute}gある。この水溶液は全部で何g？`;
+          hint = `溶液 = 溶質 ÷ 濃度 × 100
+= ${solute} ÷ ${percent} × 100`;
+        }
+
+      } while(
+        !Number.isInteger(answer) ||
+        !(answer <= 9 || answer % 10 === 0)
+      );
+
+      return {
+        question,
+        answer,
+        hint,
+        unit: type === 'find_percent' ? '%' : 'g'
+      };
+}
+
+    function generateHookQuestion() {
+      const questionTypes = ['find_force', 'find_extension'];
+      const qType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+
+      let question, answer, hint, unit;
+
+      // 中学生向け表現："1Nあたり○cmのびるバネ"
+      const cmPerNOptions = [1, 2, 3, 4, 5, 6, 8, 10];
+      const cmPerN = cmPerNOptions[Math.floor(Math.random() * cmPerNOptions.length)];
+      const x = Math.floor(Math.random() * 10) + 1; // 力(N) or のび(cm)の係数
+
+      if (qType === 'find_force') {
+        const extension = x * cmPerN; // のび(cm)
+        question = `1Nあたり${cmPerN}cmのびるバネを${extension}cmのばすには、何Nの力が必要ですか？`;
+        answer = x;
+        hint = `力(N) = のび(cm) ÷ (1Nあたりのびる長さ)
+= ${extension} ÷ ${cmPerN}`;
+        unit = 'N';
+      } else {
+        const force = x; // N
+        const extension = force * cmPerN; // cm
+        question = `1Nあたり${cmPerN}cmのびるバネに${force}Nの力を加えると、何cmのびますか？`;
+        answer = extension;
+        hint = `のび(cm) = 力(N) × (1Nあたりのびる長さ)
+= ${force} × ${cmPerN}`;
+        unit = 'cm';
+      }
+
+      return { question, answer, hint, unit };
+    }
+
+    function generateOhmQuestion() {
+      const questionTypes = ['find_voltage', 'find_current', 'find_resistance'];
+      const qType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+
+      let question, answer, hint, unit;
+      const R = (Math.floor(Math.random() * 10) + 1) * 2;
+      const I = Math.floor(Math.random() * 5) + 1;
+      const V = I * R;
+
+      switch(qType) {
+        case 'find_voltage':
+          question = `${R}Ωの抵抗に${I}Aの電流が流れています。電圧は何Vですか？`;
+          answer = V;
+          hint = `電圧(V) = 電流(A) × 抵抗(Ω)\n= ${I} × ${R}`;
+          unit = 'V';
+          break;
+        case 'find_current':
+          question = `${R}Ωの抵抗に${V}Vの電圧をかけました。流れる電流は何Aですか？`;
+          answer = I;
+          hint = `電流(A) = 電圧(V) ÷ 抵抗(Ω)\n= ${V} ÷ ${R}`;
+          unit = 'A';
+          break;
+        case 'find_resistance':
+          question = `${V}Vの電圧をかけたら${I}Aの電流が流れました。抵抗は何Ωですか？`;
+          answer = R;
+          hint = `抵抗(Ω) = 電圧(V) ÷ 電流(A)\n= ${V} ÷ ${I}`;
+          unit = 'Ω';
+          break;
+      }
+
+      return { question, answer, hint, unit };
+    }
+
+    // ============================================
+    // UI Functions
+    // ============================================
+
+    function hideAllScreens() {
+  // 画面切替時：タイトル画面カスタム配置は必ず隠す（他画面に残る不具合対策）
+  hideTitleCustomizationUI();
+
+  document.querySelectorAll('#game-container > div').forEach(el => {
+    el.classList.add('hidden');
+  });
+}
+
+
+    function showStart() {
+      hideAllScreens();
+      document.getElementById('start-screen').classList.remove('hidden');
+      updateStatsDisplay();
+      renderTitleMonsters();
+    }
+
+    function showGenreSelect() {
+      hideAllScreens();
+      document.getElementById('genre-screen').classList.remove('hidden');
+    }
+
+    function showZukan() {
+      hideAllScreens();
+      document.getElementById('zukan-screen').classList.remove('hidden');
+      renderZukan();
+    }
+
+    function updateStatsDisplay() {
+      const unlockedEl = document.getElementById('unlocked-count');
+      if (unlockedEl) unlockedEl.textContent = gameState.unlockedMonsters.length;
+
+      const accuracy = gameState.totalQuestions > 0
+        ? Math.round((gameState.totalCorrect / gameState.totalQuestions) * 100)
+        : '-';
+
+      const accEl = document.getElementById('total-accuracy');
+      if (accEl) accEl.textContent = accuracy + '%';
+
+      const solvedEl = document.getElementById('total-solved');
+      if (solvedEl) solvedEl.textContent = gameState.totalQuestions;
+    }
+
+    function getMonsterKey() {
+      if (gameState.currentStage === 'egg') return 'egg';
+      if (gameState.currentStage === 'baby') return `baby_${gameState.currentType}`;
+      // 成長期は分岐なし（各属性1体）
+      if (gameState.currentStage === 'growth') return `growth_${gameState.currentType}`;
+      // 成熟期以降は variant を含む
+      return `${gameState.currentStage}_${gameState.currentType}_${gameState.currentVariant}`;
+    }
+
+    // B案：ジャンル選択後〜完全体までの「通算不正解数」
+    // （cycleQuestions/cycleCorrect は進化でリセットしない設計なのでそのまま使える）
+    function getTotalWrong() {
+      return Math.max(0, (gameState.cycleQuestions || 0) - (gameState.cycleCorrect || 0));
+    }
+
+    function updateLifeDisplay() {
+      const el = document.getElementById('q-life');
+      if (!el) return;
+      const life = Math.max(0, Math.min(3, Number(gameState.life ?? 3)));
+      el.innerHTML = Array.from({ length: 3 }, (_, i) =>
+        `<span class="text-xl" aria-hidden="true">${i < life ? '❤️' : '🖤'}</span>`
+      ).join('');
+    }
+
+    // 育成中に表示されたモンスターは必ず図鑑登録（未登録なら追加）
+    function ensureUnlocked(monsterKey) {
+      if (!monsterKey) return false;
+      if (!MONSTERS[monsterKey]) return false;
+      if (gameState.unlockedMonsters.includes(monsterKey)) return false;
+      gameState.unlockedMonsters.push(monsterKey);
+      updateStatsDisplay();
+      // 連続呼び出しでも落ちないように await せずに保存
+      saveGameState();
+      return true;
+    }
+
+    function renderMonster(container, monsterKey, size = 120) {
+      // Guard: DOMがまだ無い/ID変更などでも落ちない
+      if (!container) return;
+
+      const monster = MONSTERS[monsterKey];
+      if (!monster) {
+        container.innerHTML = `<div class="text-6xl">${MONSTERS.egg.emoji}</div>`;
+        return;
+      }
+
+      const overrideUrl = MONSTER_IMAGE_OVERRIDES[monsterKey];
+      const autoUrl = (AUTO_IMAGE_NAMING ? (IMAGE_BASE_PATH + monsterKey + '.png') : null);
+      const imgUrl = overrideUrl || monster.img || autoUrl;
+
+      // まず空にする
+      container.innerHTML = '';
+
+      // wrapper
+      const outer = document.createElement('div');
+      outer.className = 'flex items-center justify-center h-full w-full';
+
+      const box = document.createElement('div');
+      box.className = 'rounded-2xl bg-white/5 flex items-center justify-center overflow-hidden';
+      box.style.width = size + 'px';
+      box.style.height = size + 'px';
+
+      function showEmojiFallback() {
+        // ここで parentElement を前提にしない（null.style事故防止）
+        box.innerHTML = '';
+        box.textContent = monster.emoji;
+        box.style.fontSize = size + 'px';
+        box.style.display = 'flex';
+        box.style.alignItems = 'center';
+        box.style.justifyContent = 'center';
+        // 色の雰囲気だけ残す
+        box.style.filter = `drop-shadow(0 0 20px ${monster.color}40)`;
+      }
+
+      if (imgUrl) {
+        const img = document.createElement('img');
+        img.className = 'monster-img';
+        img.alt = monster.name;
+        img.decoding = 'async';
+        img.loading = 'eager';
+
+        img.addEventListener('error', () => {
+          showEmojiFallback();
+        }, { once: true });
+
+        img.src = imgUrl;
+        box.appendChild(img);
+      } else {
+        showEmojiFallback();
+      }
+
+      outer.appendChild(box);
+      container.appendChild(outer);
+    }
+
+    function getTypeBadge(type) {
+      const badges = {
+        water: { emoji: '💧', name: '水', class: 'bg-blue-500' },
+        fighting: { emoji: '💪', name: '格闘', class: 'bg-orange-500' },
+        electric: { emoji: '⚡', name: '電気', class: 'bg-yellow-500' }
+      };
+      return badges[type] || badges.water;
+    }
+
+    // ============================================
+    // Game Flow
+    // ============================================
+
+    function selectGenre(type) {
+      gameState.currentType = type;
+      gameState.life = 3;
+      gameState.gameOver = false;
+      gameState.currentStage = 'baby';
+      gameState.currentVariant = null;
+      gameState.cycleCorrect = 0;
+      gameState.cycleQuestions = 0;
+      gameState.cycleHintUsed = 0;
+      gameState.phaseCorrect = 0;
+      gameState.phaseQuestions = 0;
+      gameState.phaseHintUsed = 0;
+      gameState.phaseStartTime = null;
+
+      const babyKey = `baby_${type}`;
+      if (!gameState.unlockedMonsters.includes(babyKey)) {
+        gameState.unlockedMonsters.push(babyKey);
+      }
+
+      saveGameState();
+      startQuestion();
+    }
+
+    function startQuestion() {
+      hideAllScreens();
+      document.getElementById('question-screen').classList.remove('hidden');
+
+      updateLifeDisplay();
+
+      // phase計測開始（1分以内4問正解判定）
+      if (!gameState.phaseStartTime) gameState.phaseStartTime = Date.now();
+
+      const monsterKey = getMonsterKey();
+      // 育成画面に出たら未入手でも登録
+      ensureUnlocked(monsterKey);
+
+      // 左側で大きく表示
+      renderMonster(document.getElementById('q-monster'), monsterKey, 220);
+      const m = MONSTERS[monsterKey];
+      document.getElementById('q-monster-name').textContent = m?.name || '';
+
+
+      const badge = getTypeBadge(gameState.currentType);
+      document.getElementById('q-type-badge').innerHTML = `${badge.emoji} ${badge.name}タイプ`;
+      document.getElementById('q-type-badge').className = `px-3 py-1 rounded-full text-sm font-bold text-white ${badge.class}`;
+
+      // ライフ表示の右隣：進化まで残り
+      const remain = Math.max(0, 4 - (gameState.phaseCorrect || 0));
+      const evoRemainEl = document.getElementById('q-evo-remaining');
+      if (evoRemainEl) {
+        evoRemainEl.textContent = remain > 0 ? `あと${remain}問正解で進化！` : '進化できる！✨';
+      }
+
+      // 成熟期かつ通算全問正解なら究極体チャンス表示
+      const isCyclePerfect = (gameState.cycleQuestions > 0 && gameState.cycleCorrect === gameState.cycleQuestions);
+      if (gameState.currentStage === 'mature' && isCyclePerfect && evoRemainEl) {
+        evoRemainEl.textContent += '　✨究極体チャンス！？';
+      }
+
+      // 進化は「4問正解」で判定するので、進捗は正解数で表示
+      const correctNow = Math.min(gameState.phaseCorrect, 4);
+      const progEl = document.getElementById('q-progress-correct');
+      if (progEl) progEl.textContent = correctNow;
+
+      gameState.currentQuestion = generateQuestion(gameState.currentType);
+      gameState.hintShown = false;
+
+      document.getElementById('question-text').textContent = gameState.currentQuestion.question;
+      document.getElementById('answer-unit').textContent = gameState.currentQuestion.unit;
+      document.getElementById('answer-input').value = '';
+      document.getElementById('hint-area').classList.add('hidden');
+      document.getElementById('hint-btn').disabled = false;
+      document.getElementById('hint-btn').classList.remove('opacity-50');
+
+      document.getElementById('answer-input').focus();
+    }
+
+    function showHint() {
+      if (gameState.hintShown) return;
+      gameState.hintShown = true;
+      gameState.phaseHintUsed++;
+      gameState.cycleHintUsed++;
+
+      document.getElementById('hint-text').textContent = gameState.currentQuestion.hint;
+      document.getElementById('hint-area').classList.remove('hidden');
+      document.getElementById('hint-btn').disabled = true;
+      document.getElementById('hint-btn').classList.add('opacity-50');
+    }
+
+    function submitAnswer() {
+      const input = document.getElementById('answer-input');
+      const userAnswer = parseFloat(input.value);
+      const correctAnswer = gameState.currentQuestion.answer;
+
+      if (isNaN(userAnswer)) {
+        input.classList.add('border-red-500');
+        setTimeout(() => input.classList.remove('border-red-500'), 500);
+        return;
+      }
+
+      const isCorrect = Math.abs(userAnswer - correctAnswer) < 0.001;
+
+      gameState.phaseQuestions++;
+      gameState.cycleQuestions++;
+      gameState.totalQuestions++;
+
+      if (isCorrect) {
+        gameState.phaseCorrect++;
+        gameState.cycleCorrect++;
+        gameState.totalCorrect++;
+      }
+
+      if (!isCorrect) {
+        gameState.life = Math.max(0, (gameState.life ?? 3) - 1);
+        updateLifeDisplay();
+        if (gameState.life <= 0) {
+          gameState.gameOver = true;
+        }
+      }
+
+      showResult(isCorrect, correctAnswer);
+    }
+
+    function showResult(isCorrect, correctAnswer) {
+      hideAllScreens();
+      document.getElementById('result-screen').classList.remove('hidden');
+
+      if (isCorrect) {
+        document.getElementById('result-icon').textContent = '⭕';
+        document.getElementById('result-title').textContent = '正解！';
+        document.getElementById('result-title').className = 'text-3xl font-bold text-green-400 mb-2';
+        document.getElementById('result-message').textContent = 'すごい！その調子！';
+        document.getElementById('explanation-area').classList.add('hidden');
+      } else {
+        document.getElementById('result-icon').textContent = '❌';
+        document.getElementById('result-title').textContent = '不正解...';
+        document.getElementById('result-title').className = 'text-3xl font-bold text-red-400 mb-2';
+        document.getElementById('result-message').textContent = '次はがんばろう！';
+
+        const explanation = getExplanation(gameState.currentQuestion);
+        document.getElementById('explanation-text').textContent = explanation;
+        document.getElementById('explanation-area').classList.remove('hidden');
+      }
+
+      document.getElementById('correct-answer').textContent = correctAnswer + gameState.currentQuestion.unit;
+
+      // 次へボタンの挙動を状況で切り替える
+      const nextBtn = document.getElementById('result-next-btn');
+      if (nextBtn) {
+        if (gameState.gameOver) {
+          nextBtn.textContent = '🥚 卵に戻る';
+          nextBtn.className = 'btn-3d w-full py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xl font-bold rounded-2xl hover:from-yellow-500 hover:to-orange-600';
+          nextBtn.onclick = () => showGameOver();
+        } else {
+          nextBtn.textContent = '次へ進む →';
+          nextBtn.className = 'btn-3d w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xl font-bold rounded-2xl hover:from-blue-600 hover:to-indigo-600';
+          nextBtn.onclick = () => nextQuestion();
+        }
+      }
+
+      saveGameState();
+    }
+
+    function getExplanation(question) {
+      if (gameState.currentType === 'water') {
+        return `📋 解き方：\n濃度(%) = (溶質の質量g) ÷ (溶液の質量g) × 100\n\nポイント：\n• 溶液 = 溶質 + 溶媒\n• 濃度の単位は%です\n• 小数第1位で四捨五入`;
+      } else if (gameState.currentType === 'fighting') {
+        return `📋 解き方：
+バネは、加えた力に比例してのびます。
+
+ポイント：
+• 「1Nあたり何cmのびるか」を使って考えます
+• のび(cm) = 力(N) × (1Nあたりのびる長さ)
+• 力(N) = のび(cm) ÷ (1Nあたりのびる長さ)`;
+      } else if (gameState.currentType === 'electric') {
+        return `📋 解き方：\nオームの法則: V = IR\n(V: 電圧[V], I: 電流[A], R: 抵抗[Ω])\n\nポイント：\n• 電圧と電流は比例関係\n• 抵抗が大きいほど電流は小さくなります`;
+      }
+      return `もう一度チャレンジしてみましょう！`;
+    }
+
+    function nextQuestion() {
+      // ルール：4問正解したら進化
+      if (gameState.phaseCorrect >= 4) {
+        checkEvolution();
+      } else {
+        startQuestion();
+      }
+    }
+
+    function weightedChoice(weights, rng = Math.random) {
+      const entries = Object.entries(weights).filter(([, w]) => typeof w === 'number' && w > 0);
+      const total = entries.reduce((s, [, w]) => s + w, 0);
+      if (total <= 0) return entries[0]?.[0] || null;
+      const r = rng() * total;
+      let acc = 0;
+      for (const [k, w] of entries) {
+        acc += w;
+        if (r <= acc) return k;
+      }
+      return entries[entries.length - 1]?.[0] || null;
+    }
+
+    // 成長期→成熟期：3ルート確率分岐
+    // 初期：33/33/33
+    // ・全問正解(=4問で4正解) → 正確性 +30
+    // ・1分以内に4問正解 → スピード +30
+    // ・両方達成 → バランスのみ +30（※他2つは加算しない）
+    function decideMatureVariantByProbability({ isPerfect4, isFast4 }, rng = Math.random) {
+      const w = { accuracy: 33, speed: 33, balance: 33 };
+      if (isPerfect4 && isFast4) {
+        w.balance += 30;
+      } else {
+        if (isPerfect4) w.accuracy += 30;
+        if (isFast4) w.speed += 30;
+      }
+      return weightedChoice(w, rng) || 'balance';
+    }
+
+    // 成熟期→完全体/究極体
+    // 初期：完全体100%
+    // ジャンル選択から通算で「全問正解」なら究極体へ +30%（=30%）
+    function decidePerfectOrUltimate({ isCyclePerfect }, rng = Math.random) {
+      const ultimateChance = isCyclePerfect ? 0.30 : 0.0;
+      return (rng() < ultimateChance) ? 'ultimate' : 'perfect';
+    }
+
+    function checkEvolution() {
+      // ここに来る時点で phaseCorrect >= 4 の想定
+      const accuracyRate = gameState.phaseQuestions > 0 ? (gameState.phaseCorrect / gameState.phaseQuestions) : 0;
+      const tempoRate = gameState.phaseQuestions > 0 ? ((gameState.phaseQuestions - gameState.phaseHintUsed) / gameState.phaseQuestions) : 0;
+
+      // スピード判定：phaseStartTime から 4問正解までが60秒以内
+      const elapsedMs = gameState.phaseStartTime ? (Date.now() - gameState.phaseStartTime) : Infinity;
+      const isFast4 = elapsedMs <= 60000;
+
+      // 全問正解判定：このphaseが4問で4正解
+      const isPerfect4 = (gameState.phaseQuestions === 4 && gameState.phaseCorrect === 4);
+
+      let newVariant = gameState.currentVariant;
+
+      // 幼年期(baby) → 成長期(growth) は分岐なし（一本道）
+      // ※成長期は各属性1体のみなので variant は使わない
+      if (gameState.currentStage === 'baby') {
+        newVariant = null;
+      }
+
+      // growth -> mature は確率分岐（3ルート）
+      if (gameState.currentStage === 'growth') {
+        newVariant = decideMatureVariantByProbability({ isPerfect4, isFast4 });
+      }
+
+      // ステージ遷移
+      let toStage = null;
+      if (gameState.currentStage === 'egg') toStage = 'baby';
+      else if (gameState.currentStage === 'baby') toStage = 'growth';
+      else if (gameState.currentStage === 'growth') toStage = 'mature';
+      else if (gameState.currentStage === 'mature') {
+        const isCyclePerfect = (gameState.cycleQuestions > 0 && gameState.cycleCorrect === gameState.cycleQuestions);
+        toStage = decidePerfectOrUltimate({ isCyclePerfect });
+      } else {
+        // perfect / ultimate 到達済み
+        showComplete();
+        return;
+      }
+
+      showEvolution(gameState.currentStage, toStage, newVariant);
+    }
+
+    function showEvolution(fromStage, toStage, newVariant) {
+      hideAllScreens();
+      document.getElementById('evolution-screen').classList.remove('hidden');
+
+      const beforeKey = getMonsterKey();
+
+      gameState.currentStage = toStage;
+      if (newVariant) gameState.currentVariant = newVariant;
+
+      const afterKey = getMonsterKey();
+      const afterMonster = MONSTERS[afterKey];
+
+      if (!gameState.unlockedMonsters.includes(afterKey)) {
+        gameState.unlockedMonsters.push(afterKey);
+      }
+
+      ensureUnlocked(beforeKey);
+      renderMonster(document.getElementById('evo-monster-before'), beforeKey, 280);
+      ensureUnlocked(afterKey);
+      renderMonster(document.getElementById('evo-monster-after'), afterKey, 280);
+
+      document.getElementById('evo-title').textContent = '進化中...';
+      document.getElementById('evo-stage').textContent = '';
+      document.getElementById('evo-name').textContent = '';
+      document.getElementById('evo-continue-btn').classList.add('hidden');
+
+      const beforeMonsterEl = document.getElementById('evo-monster-before');
+      const afterMonsterEl = document.getElementById('evo-monster-after');
+      const energy = document.getElementById('evo-energy');
+      const sweep = document.getElementById('evo-sweep');
+      const particles = document.getElementById('evo-particles');
+      const stageWrap = document.getElementById('evo-stage-wrap');
+      const rainbow = document.getElementById('evo-rainbow');
+
+      // Guard: if essential DOM is missing, abort safely
+      if (!beforeMonsterEl || !afterMonsterEl || !stageWrap) {
+        console.error('Evolution DOM missing:', { beforeMonsterEl, afterMonsterEl, stageWrap });
+        showStart();
+        return;
+      }
+
+      function playEnergyEffects() {
+        // smooth (non-strobe) overlays
+        if (energy) { energy.classList.remove('play'); void energy.offsetWidth; energy.classList.add('play'); }
+        if (sweep) { sweep.classList.remove('play'); void sweep.offsetWidth; sweep.classList.add('play'); }
+
+        // particles
+        if (!particles) return;
+        particles.innerHTML = '';
+        const colors = ['rgba(34,197,94,0.9)','rgba(59,130,246,0.9)','rgba(168,85,247,0.9)','rgba(236,72,153,0.9)','rgba(245,158,11,0.9)'];
+        const count = isUltimate ? 34 : 20;
+        for (let i = 0; i < count; i++) {
+          const p = document.createElement('div');
+          p.className = 'evo-particle';
+          const angle = (Math.PI * 2) * (i / 20) + (Math.random() * 0.25);
+          const dist = 85 + Math.random() * 80;
+          p.style.setProperty('--dx', (Math.cos(angle) * dist) + 'px');
+          p.style.setProperty('--dy', (Math.sin(angle) * dist) + 'px');
+          p.style.left = (50 + (Math.random()*10-5)) + '%';
+          p.style.top = (50 + (Math.random()*10-5)) + '%';
+          const s = 8 + Math.random() * 12;
+          p.style.width = s + 'px';
+          p.style.height = s + 'px';
+          p.style.background = `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.45), ${colors[i % colors.length]})`;
+          p.style.animationDelay = (Math.random() * 140) + 'ms';
+          particles.appendChild(p);
+        }
+      }
+
+      // reset visual states
+      beforeMonsterEl.style.opacity = '1';
+      afterMonsterEl.style.opacity = '0';
+      beforeMonsterEl.classList.remove('evolve-spin');
+      afterMonsterEl.classList.remove('evolve-spin');
+      energy?.classList.remove('play');
+      sweep?.classList.remove('play');
+      if (particles) particles.innerHTML = '';
+
+      document.querySelectorAll('.sparkle').forEach((sp) => {
+        sp.style.animation = '';
+        sp.style.opacity = '';
+        sp.style.transform = '';
+      });
+
+      stageWrap.classList.remove('screen-shake');
+      void stageWrap.offsetWidth;
+      stageWrap.classList.add('screen-shake');
+      if (rainbow) rainbow.style.opacity = '1';
+
+      // Digimon-style evolution (flashy but no strobe):
+      // - Base crossfade (before -> after)
+      // - "Digital swap" frames that increasingly favor after
+      // - Scanlines + glitch bars overlays (low opacity)
+      // ULTIMATE: longer + more dramatic (but still no strobe)
+      const isUltimate = (toStage === 'ultimate');
+      const TOTAL = isUltimate ? 6800 : 5200;      // total evolution time (ms)
+      const SWAPS = isUltimate ? 34 : 26;        // number of digital swap frames
+      const SWAP_LEN_MIN = isUltimate ? 85 : 70; // ms
+      const SWAP_LEN_MAX = isUltimate ? 220 : 180;// ms
+
+      // Ensure overlays exist (created once)
+      let scan = stageWrap.querySelector('.evo-scan');
+      let glitch = stageWrap.querySelector('.evo-glitch');
+      if (!scan) {
+        scan = document.createElement('div');
+        scan.className = 'evo-scan';
+        stageWrap.appendChild(scan);
+      }
+      if (!glitch) {
+        glitch = document.createElement('div');
+        glitch.className = 'evo-glitch';
+        stageWrap.appendChild(glitch);
+      }
+
+      function lerp(a, b, t) { return a + (b - a) * t; }
+      function easeInOut(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; }
+
+      function setBlend(t) {
+        // smooth baseline fade
+        const tt = easeInOut(t);
+        const beforeAlpha = lerp(1, 0, tt);
+        const afterAlpha  = lerp(0, 1, tt);
+        beforeMonsterEl.style.opacity = beforeAlpha.toFixed(2);
+        afterMonsterEl.style.opacity  = afterAlpha.toFixed(2);
+
+        // subtle digital filter ramp (kept gentle)
+        const sat = lerp(1.0, 1.35, tt);
+        const con = lerp(1.0, 1.25, tt);
+        if (stageWrap) stageWrap.style.filter = `saturate(${sat}) contrast(${con})`;
+      }
+
+      function glitchBurst(power = 0.6) {
+        // trigger scan + glitch bars (no white flash)
+        scan.classList.remove('play'); void scan.offsetWidth; scan.classList.add('play');
+        glitch.style.setProperty('--p', String(power));
+        glitch.classList.remove('play'); void glitch.offsetWidth; glitch.classList.add('play');
+        playEnergyEffects();
+      }
+
+      // reset overlays
+      scan.classList.remove('play');
+      glitch.classList.remove('play');
+      if (stageWrap) stageWrap.style.filter = '';
+
+      // Ultimate special overlay toggle
+      const ultimateOverlay = document.getElementById('evo-ultimate');
+      if (ultimateOverlay) {
+        if (isUltimate) {
+          ultimateOverlay.classList.remove('hidden');
+          ultimateOverlay.classList.remove('play');
+          void ultimateOverlay.offsetWidth;
+          ultimateOverlay.classList.add('play');
+        } else {
+          ultimateOverlay.classList.add('hidden');
+          ultimateOverlay.classList.remove('play');
+        }
+      }
+
+      // start motion
+      setTimeout(() => { beforeMonsterEl.classList.add('evolve-spin'); }, 150);
+      setTimeout(() => { glitchBurst(isUltimate ? 0.62 : 0.45); }, isUltimate ? 420 : 520);
+      if (isUltimate) {
+        setTimeout(() => { glitchBurst(0.78); }, 980);
+      }
+
+      // Continuous crossfade via rAF
+      const t0 = performance.now();
+      let rafId = 0;
+      function tick(now) {
+        const t = Math.min((now - t0) / TOTAL, 1);
+        setBlend(t);
+        if (t < 1) rafId = requestAnimationFrame(tick);
+      }
+      rafId = requestAnimationFrame(tick);
+
+      // Digital swap frames: early mostly before, later mostly after
+      let swapIdx = 0;
+      let swapTimer = null;
+      function scheduleSwap() {
+        swapIdx++;
+        const t = Math.min(swapIdx / SWAPS, 1);
+        const bias = t * t; // after appears more often later
+
+        // duration also increases later (after holds longer)
+        const len = Math.round(lerp(SWAP_LEN_MIN, SWAP_LEN_MAX, bias));
+
+        // Pick which frame is "dominant" for this beat
+        const showAfter = Math.random() < bias;
+
+        // Apply a quick dominance shift on top of baseline fade
+        // (still smooth; never full on/off)
+        if (showAfter) {
+          afterMonsterEl.style.opacity = Math.max(parseFloat(afterMonsterEl.style.opacity || '0'), 0.75).toFixed(2);
+          beforeMonsterEl.style.opacity = Math.min(parseFloat(beforeMonsterEl.style.opacity || '1'), 0.25).toFixed(2);
+          afterMonsterEl.classList.add('evolve-spin');
+        } else {
+          beforeMonsterEl.style.opacity = Math.max(parseFloat(beforeMonsterEl.style.opacity || '1'), 0.75).toFixed(2);
+          afterMonsterEl.style.opacity  = Math.min(parseFloat(afterMonsterEl.style.opacity || '0'), 0.25).toFixed(2);
+        }
+
+        // Occasional digimon-like digital bursts
+        const keyMoments = isUltimate
+          ? [3, 7, 12, 18, 24, 30, 33]
+          : [3, 8, 14, 20, 25];
+        if (keyMoments.includes(swapIdx)) {
+          glitchBurst(lerp(isUltimate ? 0.55 : 0.35, isUltimate ? 0.95 : 0.85, bias));
+        } else if (Math.random() < (isUltimate ? 0.26 : 0.18)) {
+          glitchBurst(lerp(isUltimate ? 0.35 : 0.25, isUltimate ? 0.78 : 0.65, bias));
+        }
+
+        if (swapIdx < SWAPS) {
+          swapTimer = setTimeout(scheduleSwap, len);
+        } else {
+          // Finish
+          setTimeout(() => {
+            cancelAnimationFrame(rafId);
+            if (swapTimer) clearTimeout(swapTimer);
+
+            beforeMonsterEl.style.opacity = '0';
+            afterMonsterEl.style.opacity  = '1';
+            afterMonsterEl.classList.add('evolve-spin');
+
+            document.querySelectorAll('.sparkle').forEach((burst) => {
+              burst.style.animation = 'evolve-burst 1.05s ease-out forwards';
+            });
+
+            setTimeout(() => {
+              const stageNames = { baby: '幼年期', growth: '成長期', mature: '成熟期', perfect: '完全体', ultimate: '究極体' };
+              document.getElementById('evo-title').textContent = '進化完了！';
+              document.getElementById('evo-stage').textContent = stageNames[toStage] || '';
+              document.getElementById('evo-name').textContent = afterMonster?.name || '';
+              document.getElementById('evo-continue-btn').classList.remove('hidden');
+
+              beforeMonsterEl.classList.remove('evolve-spin');
+              afterMonsterEl.classList.remove('evolve-spin');
+              energy?.classList.remove('play');
+              sweep?.classList.remove('play');
+              scan.classList.remove('play');
+              glitch.classList.remove('play');
+              if (particles) particles.innerHTML = '';
+              if (rainbow) rainbow.style.opacity = '0';
+              stageWrap.style.filter = '';
+              if (ultimateOverlay) {
+                ultimateOverlay.classList.add('hidden');
+                ultimateOverlay.classList.remove('play');
+              }
+            }, 650);
+          }, 240);
+        }
+      }
+      scheduleSwap();
+
+      gameState.phaseCorrect = 0;
+      gameState.phaseQuestions = 0;
+      gameState.phaseHintUsed = 0;
+      gameState.phaseStartTime = null;
+
+      saveGameState();
+    }
+
+    function showEvolutionFailed() {
+      hideAllScreens();
+      const evoScreen = document.getElementById('evolution-screen');
+      if (!evoScreen) {
+        console.error('Missing evolution-screen');
+        showStart();
+        return;
+      }
+      evoScreen.classList.remove('hidden');
+
+      const beforeKey = getMonsterKey();
+      const beforeEl = document.getElementById('evo-monster-before');
+      if (beforeEl) renderMonster(beforeEl, beforeKey, 280);
+
+      const afterEl = document.getElementById('evo-monster-after');
+      if (afterEl) {
+        afterEl.innerHTML = '';
+        afterEl.style.opacity = '0';
+      }
+
+      const titleEl = document.getElementById('evo-title');
+      if (titleEl) titleEl.textContent = '進化失敗...';
+      const stageEl = document.getElementById('evo-stage');
+      if (stageEl) stageEl.textContent = '正答率が足りませんでした';
+      const nameEl = document.getElementById('evo-name');
+      if (nameEl) nameEl.textContent = '卵からやり直しです';
+
+      const btn = document.getElementById('evo-continue-btn');
+      if (btn) {
+        btn.classList.add('hidden');
+        btn.textContent = '卵に戻る';
+        setTimeout(() => { btn.classList.remove('hidden'); }, 1500);
+      }
+
+      gameState.currentStage = 'egg';
+      gameState.currentType = null;
+      gameState.currentVariant = null;
+      gameState.cycleCorrect = 0;
+      gameState.cycleQuestions = 0;
+      gameState.cycleHintUsed = 0;
+      gameState.phaseCorrect = 0;
+      gameState.phaseQuestions = 0;
+      gameState.phaseHintUsed = 0;
+
+      saveGameState();
+    }
+
+    function continueAfterEvolution() {
+      if (gameState.currentStage === 'perfect' || gameState.currentStage === 'ultimate') {
+        showComplete();
+      } else if (gameState.currentStage === 'egg') {
+        showStart();
+      } else {
+        startQuestion();
+      }
+    }
+
+    function showComplete() {
+      hideAllScreens();
+      document.getElementById('complete-screen').classList.remove('hidden');
+
+      const titleEl = document.getElementById('complete-title');
+      if (titleEl) {
+        titleEl.textContent = (gameState.currentStage === 'ultimate') ? '究極体に進化！' : '完全体に進化！';
+      }
+
+      const monsterKey = getMonsterKey();
+      const monster = MONSTERS[monsterKey];
+
+      ensureUnlocked(monsterKey);
+      renderMonster(document.getElementById('complete-monster'), monsterKey, 300);
+      document.getElementById('complete-name').textContent = monster?.name || '';
+
+      const cycleAccuracy = gameState.cycleQuestions > 0
+        ? Math.round((gameState.cycleCorrect / gameState.cycleQuestions) * 100)
+        : 0;
+      document.getElementById('cycle-accuracy').textContent = cycleAccuracy + '%';
+      document.getElementById('cycle-questions').textContent = gameState.cycleQuestions;
+
+      saveGameState();
+    }
+
+    function createNewEgg() {
+      gameState.currentStage = 'egg';
+      gameState.life = 3;
+      gameState.currentType = null;
+      gameState.currentVariant = null;
+      gameState.cycleCorrect = 0;
+      gameState.cycleQuestions = 0;
+      gameState.cycleHintUsed = 0;
+      gameState.phaseCorrect = 0;
+      gameState.phaseQuestions = 0;
+      gameState.phaseHintUsed = 0;
+      gameState.phaseStartTime = null;
+      gameState.gameOver = false;
+
+      saveGameState();
+      showGenreSelect();
+    }
+
+    function renderZukan() {
+      const grid = document.getElementById('zukan-grid');
+      grid.innerHTML = '';
+
+      const typeOrder = { water: 0, fighting: 1, electric: 2, undefined: 99, null: 99 };
+      const stageOrder = { egg: 0, baby: 1, growth: 2, mature: 3, perfect: 4, ultimate: 5 };
+      const variantOrder = { accuracy: 0, balance: 1, speed: 2, undefined: 9, null: 9 };
+
+      function zukanSort([ka, a], [kb, b]) {
+        if (a.stage === 'egg' && b.stage !== 'egg') return -1;
+        if (b.stage === 'egg' && a.stage !== 'egg') return 1;
+
+        const ta = typeOrder[a.type] ?? 99;
+        const tb = typeOrder[b.type] ?? 99;
+        if (ta !== tb) return ta - tb;
+
+        const sa = stageOrder[a.stage] ?? 99;
+        const sb = stageOrder[b.stage] ?? 99;
+        if (sa !== sb) return sa - sb;
+
+        const va = variantOrder[a.variant] ?? 9;
+        const vb = variantOrder[b.variant] ?? 9;
+        if (va !== vb) return va - vb;
+
+        return ka.localeCompare(kb);
+      }
+
+      const entries = Object.entries(MONSTERS).sort(zukanSort);
+
+      entries.forEach(([key, monster]) => {
+        const isUnlocked = gameState.unlockedMonsters.includes(key);
+
+        const card = document.createElement('div');
+        card.className = `glass rounded-xl p-3 text-center transition-transform hover:scale-105 cursor-pointer ${isUnlocked ? 'hover:brightness-150' : 'opacity-40'}`;
+
+        if (isUnlocked) {
+          card.onclick = () => showMonsterDetail(key, monster);
+
+          const overrideUrl = MONSTER_IMAGE_OVERRIDES[key];
+          const autoUrl = (AUTO_IMAGE_NAMING && imageManifestLoaded) ? (IMAGE_BASE_PATH + key + '.png') : null;
+          const imgUrl = overrideUrl || monster.img || autoUrl;
+
+          card.innerHTML = `
+            <div class="mb-2 flex items-center justify-center">
+              ${imgUrl
+                ? `<div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center overflow-hidden"><img src="${imgUrl}" alt="${monster.name}" class="w-full h-full object-contain" /></div>`
+                : `<div class="text-4xl" style="filter: drop-shadow(0 0 10px ${monster.color}40);">${monster.emoji}</div>`
+              }
+            </div>
+            <div class="text-white text-xs font-bold truncate">${monster.name}</div>
+            <div class="text-white/50 text-xs">${getMonsterStageName(monster.stage)}</div>
+          `;
+        } else {
+          card.innerHTML = `
+            <div class="text-4xl mb-2 opacity-30">❓</div>
+            <div class="text-white/50 text-xs">???</div>
+            <div class="text-white/30 text-xs">未解放</div>
+          `;
+        }
+
+        grid.appendChild(card);
+      });
+    }
+
+    function getMonsterStageName(stage) {
+      const stageNames = {
+        egg: 'タマゴ',
+        baby: '幼年期',
+        growth: '成長期',
+        mature: '成熟期',
+        perfect: '完全体',
+        ultimate: '究極体'
+      };
+      return stageNames[stage] || stage;
+    }
+
+    let currentDetailKey = null;
+
+    function showMonsterDetail(key, monster) {
+      currentDetailKey = key;
+      currentDetailKey = key;
+      renderMonster(document.getElementById('detail-monster'), key, 260);
+      document.getElementById('detail-name').textContent = monster.name || '---';
+      document.getElementById('detail-stage').textContent = getMonsterStageName(monster.stage);
+
+      if (monster.type) {
+        const typeNames = { water: '💧 水タイプ', fighting: '💪 格闘タイプ', electric: '⚡ 電気タイプ' };
+        if (monster.variant) {
+          const variantNames = { accuracy: '（正確型）', speed: '（素早さ型）', balance: '（バランス型）' };
+          document.getElementById('detail-type').textContent = (typeNames[monster.type] || '') + (variantNames[monster.variant] || '');
+        } else {
+          document.getElementById('detail-type').textContent = typeNames[monster.type] || '';
+        }
+      } else {
+        document.getElementById('detail-type').textContent = '';
+      }
+
+      document.getElementById('detail-description').textContent = generateMonsterDescription(monster);
+      document.getElementById('monster-detail-modal').classList.remove('hidden');
+    }
+
+    function generateMonsterDescription(monster) {
+      // NOTE:
+      // - baby: baby_{type}
+      // - egg: egg
+      // - growth: growth_{type}
+      // - mature/perfect/ultimate: {stage}_{type}_{variant}
+       const descriptions = {
+        egg: 'まだ何も知らないタマゴ。どんな力が目覚めるのか、可能性がつまっている。',
+        baby_water: 'アクアベビー。水に親しむ小さな研究員。質量パーセント濃度の計算を覚えるほど、しずくの動きが安定していく。',
+        baby_fighting: 'ファイトベビー。バネの反動でぴょんぴょん動く元気者。フックの法則を学ぶほど、パンチのキレが増す。',
+        baby_electric: 'スパークベビー。体に小さな放電が走る。オームの法則（V=IR）を理解すると、光るリズムが整っていく。',
+
+        growth_water: '自身の体よりも大きなフラスコを宝物のように抱えた海獣の子供。フラスコの中には高濃度の魔力水が満たされている。本人はその強大な力に気づいておらず、中身がパシャパシャと跳ねる音を楽しむために、いつも元気に跳ね回っている。',
+        growth_fighting: '体の各所が小さなバネで構成された武道家の卵。ぴょんぴょんと跳ね回ることで攻撃を回避し、隙を見て「ばね」の反動を活かした正拳突きを放つ。',
+        growth_electric: '胸部にエネルギー残量を表示する「蓄電メーター」を持つドラゴンの幼体。尻尾の先がコンセントプラグになっており、好奇心旺盛にいろいろな端子に尻尾を差し込んでは感電して喜んでいる。まだ放電する力は弱いが、体内に溜め込める電力のポテンシャルは計り知れず、将来の爆発的な進化を予感させる。',
+
+        mature_water_accuracy: '「堅牢」を体現した重厚な姿。背負っていたフラスコは変質し、硬質の岩石と融合して難攻不落の甲羅となった。甲羅から突き出した複数の瓶からは常に特殊な冷却液が噴出しており、周囲に水の障壁を展開することで、あらゆる物理攻撃を無効化する。',
+        mature_water_speed: '「もっと可愛くなりたい！」という強い願いによって進化した姿。フラスコは増殖し、リボンや宝石で着飾ることで、自身の愛らしさを最大限にアピールしているアイドルモンスター。フラスコの中の水は、浴びた者を幸せな気分にさせる「ハッピー・リキッド」に変化した。戦闘は好まないが、しつこい相手には、フラスコからキラキラした高圧の水流を放つ。',
+        mature_water_balance: '「力強い」進化を遂げ、かつて抱えていたフラスコを肩に埋め込むことでエネルギーを肉体へと直接還元した姿。常に高圧の水流が肩から噴き出しており、その圧力によって筋肉が異常発達している。性格は極めて気性が荒く、自慢の牙で氷山を砕き、邪魔な存在を水圧で吹き飛ばす海の暴君。',
+
+        mature_fighting_accuracy: '「可愛さこそが最強の武器」と悟り、華やかな衣装を纏った成熟期。見た目に反して、ばねの伸縮を一点に集中させた「スプリング・ストレート」は岩石をも粉砕する。',
+        mature_fighting_speed: '厳しい修行の末、体内のエネルギーを黄金のオーラとして具現化し、鎧のように纏うことができるようになった成熟期。精神統一によってばねの弾性を自在にコントロールし、鋼鉄をも砕く強烈な正拳突きを放つ。',
+        mature_fighting_balance: 'バネの密度が極限まで高まり、並大抵の攻撃では傷ひとつつかない鉄壁の肉体を得た姿。体内に蓄えたエネルギーを熱へと変換し、炎のオーラを纏いながら重戦車のように突進する。',
+
+        mature_electric_accuracy: '神聖な力に目覚め、四枚の輝く翼を得た優雅な姿の竜。胸の電池は高密度の「ホーリー・リチウム」へと変化し、そこから生み出される電気は黄金の輪となって全身を包んでいる。邪悪なウイルスを浄化する「神聖放電」を操り、空から降り注ぐ雷は受ける者の属性によって、癒やしにも裁きにもなるという。その羽ばたきは電子の調べを奏で、戦場を静寂へと導く。',
+        mature_electric_speed: 'スマートで冷徹な姿となったドラゴンの暗殺者。翼はソーラーパネルのような特殊な皮膜に覆われ、月明かりやわずかな光からも電力を吸収する。実体を持たない「電磁の影」を操って敵を幻惑し、影から影へと音もなく移動して背後からプラグ状の尾で致命的な放電を叩き込む。',
+        mature_electric_balance: '力強い進化を遂げ、背中に巨大な「超高圧バッテリー」を背負った重量級の格闘竜。筋肉の発達に伴い、溢れ出す電力を制御しきれず、常に全身から青白い放電が漏れ出している。野生の荒々しさと電気エネルギーが融合しており、体当たり一つで都市の電網をショートさせるほどの破壊力を持つ。その咆哮は雷鳴そのもの。',
+
+        perfect_water_accuracy: '背中の甲羅がひとつの生態系へと進化した姿。常に清らかな滝が流れ落ち、そこから生まれる精霊たちが周囲を浮遊している。もはや戦うための姿ではなく、傷ついた海を癒やすために存在する「移動する聖域」そのものである。',
+        perfect_water_speed: '「世界中に可愛さとハッピーを届けたい」という使命感に目覚め、自らの体を機械化した。愛らしい外見はそのままに、四肢は強力なスラスターとなり、陸海空を自由に高速移動できるようになった。背中に背負った巨大なフラスコ型キャノンは、体内で精製した超高濃度のエネルギー液を充填しており、それを結晶化させて撃ち出す「クリスタル・キャノン・バースト」は、見た目の美しさに反して凄まじい破壊力を持つ。メカニカルなボディになっても、お茶目な性格は変わっていない。',
+        perfect_water_balance: '暴走するエネルギーを制御するため、自らの肉体を強化ガラスと鋼鉄の装甲で包み込んだ重装歩兵。かつての「器」は、敵を粉砕するための巨大な質量兵器「デッドリー・フラスコ・ハンマー」へと形を変えた。内部に渦巻く超高圧の水流は、一振りで次元の壁すら歪める衝撃波を生み出す。冷静な戦士の瞳には、もはや幼い頃の無邪気さは残っていない。',
+
+        perfect_fighting_accuracy: '進化の過程で、本体である豆が爆発的に増殖し、巨大なぬいぐるみの器を乗っ取った突然変異体。つぎはぎの体のあちこちにあるジッパーからは、常に新たな豆たちが「次の一手」を求めて覗いている。もはや個体としての意思はなく、集団の連携によって圧倒的な手数で敵を袋叩きにする。',
+        perfect_fighting_speed: '武の道を極め、悟りを開いたことで神聖な存在へと進化した完全体。背中から放出される光のエネルギーが翼となり、重力から解き放たれて空中に浮遊している。もはや物理的な打撃を必要とせず、触れた相手の闘争心を浄化してしまうほどの聖なる波動を放つ。',
+        perfect_fighting_balance: '自らの肉体をも超える巨大な「爆砕槌（スプリング・ハンマー）」と「重装盾」を装備した重装騎士。バネの伸縮を利用して巨大な獲物を軽々と振り回し、その衝撃波で敵を一掃する戦場の門番。',
+
+        perfect_electric_accuracy: '肉体が「自然の精霊（雷雲）」へと変質した超越的な姿。全身の約半分が実体を失い、帯電した雲と浮遊するクリスタルへと変化している。もはや物理的な電池に頼る必要はなく、大気中の電子を無限に取り込み、自身の力へと変換できる。常に宙に浮き、足元から発生する巨大な竜巻と稲妻は彼の意思そのもの。自然現象を体現する姿でありながら、その眼差しには慈愛が満ちており、世界の均衡を乱す者には大自然の怒りをもって対峙する。',
+        perfect_electric_speed: '成熟期の狡猾さを維持したまま、膨大な電力によって肉体が自然へと回帰した姿。全身の約半分が実体を失い、荒れ狂う雨雲と帯電した氷の結晶へと変質している。頭部には巨大な雷ボルト状の角が突き刺さり、常に周囲に局地的な落雷と竜巻を引き起こす。狡猾に嵐を操り、敵が疲弊した瞬間に「雲の体」で包み込んで内部から数万ボルトの電圧で分解する。かつての「電池」の面影は消え、世界そのものを脅かす「歩く気象災害」へと変貌した。',
+        perfect_electric_balance: 'さらなる高出力を追求した結果、肉体を機械化した重装サイボーグ形態。右腕に装備された「多銃身型電磁ガトリング」は、自身の雷エネルギーを弾丸として射出し、鋼鉄の装甲すら容易に貫通する。背部の放熱フィンと機械翼により、莫大なエネルギー消費によるオーバーヒートを回避しつつ、空戦も可能となった。冷徹な電子頭脳とドラゴンの闘争本能が共存する、歩く戦略兵器。',
+
+        ultimate_water_accuracy: '惑星のあらゆる水の源泉であり、全ての生命の種の守護者となった究極の存在。「フラスコ」は、生命の起源そのものを封じ込めた、決して破壊されることのない「聖なる櫃（アーク）」へと進化した。背中のクリスタル宮殿の内部には、太古の純粋な海洋環境がそのまま保存されており、世界の海が汚染され尽くした時、新たな創世を行うための「バックアップ」としての機能を持つ。',
+        ultimate_water_speed: '海にある膨大なデータを吸収し、超巨大な「動くガラスの城塞」へと進化した姿。本体のアザラシ部分は城の制御ユニットとなり、背中にはフラスコが変化した巨大で美しいクリスタルの宮殿がそびえ立っている。宮殿の内部は、あらゆる生物が楽しく過ごせる理想郷となっており、常にパーティーが開かれている。しかし、外敵に対しては、宮殿の各所に設置された無数の砲門から、虹色の破壊光線を一斉発射し、一切の慈悲なく殲滅する。その姿は、まさに鉄壁の守りと圧倒的な火力を兼ね備えた、動く幻想都市である。',
+        ultimate_water_balance: '海の最深部、超高圧の領域に封印されていた古代の遺産「海王のレガリア」と融合し、伝説の海神として覚醒した究極の神人型モンスター。背中に背負ったフラスコは、無限の海水を生成し続ける神器「アクア・グレイル」となり、そこから溢れ出る膨大なエネルギーが、自らの意志を持つ水龍として具現化している。手に持つ巨大な槍は、一振りで巨大な嵐を呼び、海を割るほどの雷撃を放つ権能を持つ。普段は深海の神殿で玉座に座り、海全域を静かに統治しているが、領域を侵す愚か者には、荒ぶる神としての容赦ない鉄槌を下す。',
+
+        ultimate_fighting_accuracy: '増殖し続けた豆たちが、ついに器であるぬいぐるみの許容量を超え、周囲の建物やデータそのものを取り込んで巨大な「移動型領土」へと進化した姿。その巨体は、一見すると陽気な移動遊園地やサーカス団のように見えるが、中身は数億の豆たちが支配する混沌とした王国である。',
+        ultimate_fighting_speed: '修行の果てに「個」としての肉体を捨て、世界の善なる思念と一体化した伝説の武神。もはや物理的な「ばね」の構造を超越し、因果そのものを伸縮・反転させる「理（ことわり）のバネ」を司る。',
+        ultimate_fighting_balance: '「鉄壁の門番」が、世界の危機に際して限界を超えた進化を遂げた姿。その肉体は、世界全体を支える「世界の柱」そのものとも言われ、神話に語られる巨神（タイタン）のごとき威容を誇る。',
+
+        ultimate_electric_accuracy: '世界の創生期から存在する「始原の雷データ」を継承し、六枚の翼を持つ熾天使の姿で現出した究極形態。もはや個別の生命体ではなく、世界に循環する全てのエネルギーの「抵抗（流れ）」を調整し、平穏を保つための「聖なる変電神」として定義されている。胸部に宿る「ジェネシス・セル」は、かつての電池の概念を超越した無限のエネルギー生成炉であり、ここから放たれる輝きは闇を払い、傷ついたモンスターのデータを瞬時に修復する。',
+        ultimate_electric_speed: '世界の気象制御サーバーをハッキングし、その全権限を奪取することで進化した究極の姿。もはや「嵐」という現象を操るのではなく、自らが「大気の意思」として君臨している。「狡猾」な性質は神の如き冷徹さへと昇華されており、直接手を下すことなく、敵対する勢力を異常気象や連続する落雷によって静かに、そして確実に自滅へと追い込む。右手に持つ巨大な雷鎚は、かつての電池の概念を遥かに超え、惑星一つを焼き尽くすほどの電気エネルギーを一撃で放電する。',
+        ultimate_electric_balance: '世界中に存在する膨大な電磁データと古代の神殿遺跡データを同時に取り込み、限界突破の果てに神格化した究極の姿。もはや単なる戦闘兵器ではなく、世界における全てのエネルギー循環を監視・管理する「雷神」として君臨している。普段はネットワークの最深部にある「雷雲の神域」で静観を貫いているが、世界の均衡を大きく乱す存在が現れた時、天罰として六枚の翼から惑星規模の裁きの雷を解き放つ。'
+      };
+
+      let key = 'egg';
+      if (monster.stage === 'egg') {
+        key = 'egg';
+      } else if (monster.stage === 'baby') {
+        key = `baby_${monster.type}`;
+      } else if (monster.stage === 'growth') {
+        key = `growth_${monster.type}`;
+      } else {
+        key = `${monster.stage}_${monster.type}_${monster.variant}`;
+      }
+
+      return descriptions[key] || 'まだ情報がありません。';
+    }
+
+    function closeMonsterDetail() {
+      const modal = document.getElementById('monster-detail-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function addToTitleFromDetail() {
+      if (!currentDetailKey) return;
+      addMonsterToTitle(currentDetailKey);
+      closeMonsterDetail();
+      // タイトル画面が見えているなら反映
+      if (!document.getElementById('start-screen')?.classList.contains('hidden')) {
+        renderTitleMonsters();
+      }
+    }
+
+    function showGameOver() {
+      hideAllScreens();
+      const go = document.getElementById('gameover-screen');
+      if (!go) {
+        createNewEgg();
+        return;
+      }
+      go.classList.remove('hidden');
+
+      const correctEl = document.getElementById('gameover-correct');
+      const wrongEl = document.getElementById('gameover-wrong');
+      const wrong = getTotalWrong();
+
+      if (correctEl) correctEl.textContent = String(gameState.cycleCorrect || 0);
+      if (wrongEl) wrongEl.textContent = String(wrong);
+    }
+
+    // ============================================
+    // Title screen customization
+    // ============================================
+
+    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+    function getTitleAreaRect() {
+      // タイトル配置レイヤー（#title-custom-layer）を基準にする
+      // ここが狭い要素だと左右移動が制限されるので、必ず「画面全体」を覆うレイヤーにする
+      const layer = document.getElementById('title-custom-layer');
+      if (!layer) {
+        return {
+          left: 0,
+          top: 0,
+          width: document.documentElement.clientWidth,
+          height: document.documentElement.clientHeight
+        };
+      }
+      const r = layer.getBoundingClientRect();
+      return {
+        left: r.left,
+        top: r.top,
+        width: Math.max(0, r.width),
+        height: Math.max(0, r.height)
+      };
+    }
+
+    function hideTitleMenu() {
+      const menu = document.getElementById('title-item-menu');
+      if (!menu) return;
+      menu.classList.add('hidden');
+      menu.innerHTML = '';
+    }
+
+    function showTitleMenuFor(itemId, clientX, clientY) {
+      const menu = document.getElementById('title-item-menu');
+      const ss = document.getElementById('start-screen');
+      const rect = getTitleAreaRect();
+      if (!menu || !ss || !rect) return;
+
+      const idx = (gameState.titleLayout || []).findIndex(o => o && o.id === itemId);
+      if (idx < 0) return;
+
+      menu.innerHTML = `
+        <div class="text-xs text-white/70 font-bold px-2 pb-1">タイトル配置</div>
+        <div class="grid grid-cols-3 gap-2">
+          <button class="title-menu-btn" data-act="bigger">＋</button>
+          <button class="title-menu-btn" data-act="smaller">－</button>
+          <button class="title-menu-btn" data-act="remove">🗑</button>
+        </div>
+      `;
+
+      // 画面外に出にくいように（fixedなのでviewport基準）
+      const menuW = 190;
+      const menuH = 86;
+      const vw = document.documentElement.clientWidth;
+      const vh = document.documentElement.clientHeight;
+      const left = clamp(clientX + 10, 10, vw - menuW - 10);
+      const top  = clamp(clientY + 10, 10, vh - menuH - 10);
+
+      menu.style.left = left + 'px';
+      menu.style.top  = top  + 'px';
+      menu.classList.remove('hidden');
+
+      menu.onclick = (ev) => {
+        const btn = ev.target?.closest('button');
+        const act = btn?.dataset?.act;
+        if (!act) return;
+
+        const layout = gameState.titleLayout || [];
+        const obj = layout[idx];
+        if (!obj) return;
+
+        if (act === 'bigger') {
+          obj.scale = clamp((obj.scale || 1) * 1.15, 0.6, 2.2);
+        } else if (act === 'smaller') {
+          obj.scale = clamp((obj.scale || 1) / 1.15, 0.6, 2.2);
+        } else if (act === 'remove') {
+          layout.splice(idx, 1);
+          hideTitleMenu();
+        }
+
+        gameState.titleLayout = layout;
+        saveGameState();
+        renderTitleMonsters();
+      };
+    }
+
+    function ensureTitleLayer() {
+      const layer = document.getElementById('title-custom-layer');
+      const ss = document.getElementById('start-screen');
+      const app = document.getElementById('app');
+      if (!layer || !ss || !app) return null;
+
+      // 重要：start-screen は max-w-md で幅が狭いので、そこに置くと左右移動が中央付近に制限される。
+      // 画面どこでも配置できるように、#app（画面全体のコンテナ）直下に置く。
+      if (layer.parentElement !== app) {
+        app.appendChild(layer);
+      }
+
+      // #app は relative なので absolute で全面に重ねる
+      layer.style.position = 'absolute';
+      layer.style.left = '0';
+      layer.style.top = '0';
+      layer.style.right = '0';
+      layer.style.bottom = '0';
+      layer.style.zIndex = '30';
+
+      // レイヤー自体はクリックを透過（モンスター本体だけ操作可能）
+      layer.style.pointerEvents = 'none';
+
+      layer.classList.remove('hidden');
+      return layer;
+    }
+
+    function hideTitleCustomizationUI() {
+  const layer = document.getElementById('title-custom-layer');
+  if (layer) layer.innerHTML = '';
+  hideTitleMenu();
+}
+
+    function addMonsterToTitle(monsterKey) {
+      if (!monsterKey || !MONSTERS[monsterKey]) return;
+      // 未解放は追加しない（図鑑詳細からのみなので基本OK）
+      if (!gameState.unlockedMonsters.includes(monsterKey)) return;
+
+      const layout = Array.isArray(gameState.titleLayout) ? gameState.titleLayout : [];
+
+      // 同じモンスターが既にある場合は、追加せずメニューだけ出す（重複防止）
+      const exists = layout.find(o => o && o.key === monsterKey);
+      if (exists) {
+        // タイトル画面が見えているときだけ、軽く目立たせる
+        renderTitleMonsters();
+        return;
+      }
+
+      const rect = getTitleAreaRect();
+      const vw = document.documentElement.clientWidth;
+      const vh = document.documentElement.clientHeight;
+      const baseX = vw - 92;
+      const baseY = Math.round(vh * 0.18);
+      const y = baseY + (layout.length * 78);
+      const x = baseX;
+
+      layout.push({
+        id: 't_' + Date.now().toString(36) + '_' + Math.floor(Math.random() * 1e6).toString(36),
+        key: monsterKey,
+        x: Math.round(x),
+        y: Math.round(y),
+        scale: 1
+      });
+
+      gameState.titleLayout = layout;
+      saveGameState();
+      renderTitleMonsters();
+    }
+
+    function renderTitleMonsters() {
+      const layer = ensureTitleLayer();
+      const ss = document.getElementById('start-screen');
+      if (!layer || !ss) return;
+
+      // タイトル画面以外では表示しない
+      const isVisible = !ss.classList.contains('hidden');
+      if (!isVisible) {
+        layer.innerHTML = '';
+        hideTitleMenu();
+        return;
+      }
+
+      const rect = getTitleAreaRect();
+      if (!rect) return;
+
+      layer.innerHTML = '';
+      hideTitleMenu();
+
+      const layout = Array.isArray(gameState.titleLayout) ? gameState.titleLayout : [];
+      // 上限（邪魔になり過ぎない）
+      const list = layout.slice(0, 24);
+
+      list.forEach((obj) => {
+        if (!obj || !obj.id || !obj.key) return;
+        if (!MONSTERS[obj.key]) return;
+
+        const item = document.createElement('div');
+        item.className = 'title-monster-item';
+        item.dataset.id = obj.id;
+
+        const scale = clamp(Number(obj.scale ?? 1), 0.6, 2.2);
+
+        // scale すると見た目サイズが変わるので、その分だけはみ出しを抑える
+        const size = 72 * scale;
+        const x = clamp(Number(obj.x ?? 0), 0, rect.width - size);
+        const y = clamp(Number(obj.y ?? 0), 0, rect.height - size);
+
+        // clampした値を状態にも反映（次回ドラッグの跳び防止）
+        obj.x = Math.round(x);
+        obj.y = Math.round(y);
+
+        item.style.left = x + 'px';
+        item.style.top = y + 'px';
+        item.style.transform = `scale(${scale})`;
+        item.style.transformOrigin = 'top left';
+
+        const inner = document.createElement('div');
+        inner.className = 'inner';
+        item.appendChild(inner);
+        // ベースサイズは72px（CSS）なので、renderMonsterは 68px 程度で収める
+        renderMonster(inner, obj.key, 64);
+
+        // Drag（押している間だけ移動・どこでもドラッグ可能に）
+        let dragging = false;
+        let moved = false;
+        let startX = 0, startY = 0;
+        let originX = 0, originY = 0;
+
+        // move/up は window に付けて確実に拾う（Canva/iframe環境で pointermove が落ちる対策）
+        const onMove = (e) => {
+          if (!dragging) return;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          if (!moved && (Math.abs(dx) + Math.abs(dy) > 3)) moved = true;
+
+          const scaleNow = clamp(Number(obj.scale ?? 1), 0.6, 2.2);
+          const sizeNow = 72 * scaleNow;
+          const nx = clamp(originX + dx, 0, rect.width - sizeNow);
+          const ny = clamp(originY + dy, 0, rect.height - sizeNow);
+          item.style.left = nx + 'px';
+          item.style.top = ny + 'px';
+          obj.x = Math.round(nx);
+          obj.y = Math.round(ny);
+        };
+
+        const endDrag = (e) => {
+          if (!dragging) return;
+          dragging = false;
+          try { item.releasePointerCapture?.(e.pointerId); } catch {}
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', endDrag);
+          window.removeEventListener('pointercancel', endDrag);
+          gameState.titleLayout = layout;
+          saveGameState();
+        };
+
+        item.addEventListener('pointerdown', (e) => {
+          // マウス右クリックなどは無視
+          if (e.pointerType === 'mouse' && e.button !== 0) return;
+          e.preventDefault();
+
+          hideTitleMenu();
+          dragging = true;
+          moved = false;
+
+          // ここが重要：保存済みの obj.x/obj.y を基準にする（ジャンプ防止）
+          startX = e.clientX;
+          startY = e.clientY;
+          originX = Number(obj.x ?? x);
+          originY = Number(obj.y ?? y);
+
+          try { item.setPointerCapture?.(e.pointerId); } catch {}
+
+          window.addEventListener('pointermove', onMove, { passive: false });
+          window.addEventListener('pointerup', endDrag, { passive: false });
+          window.addEventListener('pointercancel', endDrag, { passive: false });
+        });
+
+        // Click = menu (enlarge/shrink/delete)
+        item.addEventListener('click', (e) => {
+          // drag直後のclick誤爆を抑える
+          if (dragging || moved) return;
+          e.stopPropagation();
+          showTitleMenuFor(obj.id, e.clientX, e.clientY);
+        });
+
+        layer.appendChild(item);
+      });
+
+      // 画面をクリックしたらメニューを閉じる
+      ss.onclick = () => hideTitleMenu();
+    }
+
+    // ============================================
+    // Minimal in-browser tests (run with ?test=1)
+    // ============================================
+
+    function assert(name, condition) {
+      if (!condition) {
+        console.error('❌ TEST FAIL:', name);
+        throw new Error('TEST FAIL: ' + name);
+      }
+      console.log('✅', name);
+    }
+
+    async function runTests() {
+      console.group('りかモン tests');
+      assert('storage adapter has init', typeof storage.init === 'function');
+      assert('storage adapter has create', typeof storage.create === 'function');
+      assert('storage adapter has update', typeof storage.update === 'function');
+
+      assert('preloadMonsterImages exists', typeof preloadMonsterImages === 'function');
+
+      // DOM existence checks (prevents null.style crashes)
+      assert('start-screen exists', !!document.getElementById('start-screen'));
+      assert('question-screen exists', !!document.getElementById('question-screen'));
+      assert('evolution-screen exists', !!document.getElementById('evolution-screen'));
+      assert('evo-stage-wrap exists', !!document.getElementById('evo-stage-wrap'));
+      assert('evo-monster-before exists', !!document.getElementById('evo-monster-before'));
+      assert('evo-monster-after exists', !!document.getElementById('evo-monster-after'));
+      assert('gameover-screen exists', !!document.getElementById('gameover-screen'));
+
+      // renderMonsterが画像404でも落ちない（emojiフォールバック）
+      const testBox = document.createElement('div');
+      document.body.appendChild(testBox);
+      MONSTER_IMAGE_OVERRIDES['baby_water'] = '__not_found__.png';
+      renderMonster(testBox, 'baby_water', 64);
+      document.body.removeChild(testBox);
+      delete MONSTER_IMAGE_OVERRIDES['baby_water'];
+
+      // ensureUnlocked should register new monsters
+      const beforeUnlocked = gameState.unlockedMonsters.slice();
+      const someKey = 'baby_water';
+      if (!gameState.unlockedMonsters.includes(someKey)) {
+        ensureUnlocked(someKey);
+        assert('ensureUnlocked adds missing key', gameState.unlockedMonsters.includes(someKey));
+      }
+      gameState.unlockedMonsters = beforeUnlocked;
+
+      // ルール：4問正解で進化判定に入る
+      let called = false;
+      const _checkEvolution = window.checkEvolution;
+      window.checkEvolution = function() { called = true; };
+      gameState.phaseCorrect = 4;
+      gameState.phaseQuestions = 4;
+      gameState.gameOver = false;
+      nextQuestion();
+      assert('nextQuestion triggers evolution when phaseCorrect>=4', called === true);
+      window.checkEvolution = _checkEvolution;
+
+      // B案：通算不正解数（cycleQuestions - cycleCorrect）を使う
+      gameState.cycleQuestions = 7;
+      gameState.cycleCorrect = 4;
+      assert('getTotalWrong returns cumulative wrong count', getTotalWrong() === 3);
+      // 幼年期→成長期：分岐なし（variantは不要）
+      gameState.currentStage = 'baby';
+      gameState.currentType = 'water';
+      gameState.currentVariant = null;
+      gameState.phaseCorrect = 4;
+      gameState.phaseQuestions = 4;
+      gameState.phaseHintUsed = 0;
+      gameState.phaseStartTime = Date.now();
+      const prevShowEvolution = window.showEvolution;
+      let evoArgs = null;
+      window.showEvolution = function(fromStage, toStage, newVariant) { evoArgs = { fromStage, toStage, newVariant }; };
+      checkEvolution();
+      assert('baby→growth has no branching (variant unused)', evoArgs && evoArgs.fromStage === 'baby' && evoArgs.toStage === 'growth' && (evoArgs.newVariant === null || evoArgs.newVariant === undefined));
+      window.showEvolution = prevShowEvolution;
+
+      // 成長期→成熟期：両方達成ならバランスのみ +30（33/33/63 の比率）
+      const pickBoth = (rngVal) => decideMatureVariantByProbability({ isPerfect4: true, isFast4: true }, () => rngVal);
+      // rngは0〜1なので、内部で total=129 に対する割合として扱われる
+      assert('mature branching (both): can pick accuracy', pickBoth(0.0) === 'accuracy');
+      assert('mature branching (both): can pick speed', pickBoth((33 + 0.5) / 129) === 'speed');
+      assert('mature branching (both): favors balance', pickBoth((66 + 0.5) / 129) === 'balance');
+
+      // reset
+      gameState.cycleQuestions = 0;
+      gameState.cycleCorrect = 0;
+      window.checkEvolution = _checkEvolution;
+
+      // test save path without crashing
+      const prevData = currentData;
+      currentData = [];
+      gameState.totalQuestions = 1;
+      gameState.totalCorrect = 1;
+      await saveGameState();
+      assert('saveGameState creates one record', currentData.length === 1);
+
+      gameState.totalQuestions = 2;
+      await saveGameState();
+      assert('saveGameState keeps one record after update', currentData.length === 1);
+
+      currentData = prevData;
+      console.groupEnd();
+    }
+
+    // Key handlers
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !document.getElementById('question-screen').classList.contains('hidden')) {
+        submitAnswer();
+      }
+      if (e.key === 'Escape') {
+        closeMonsterDetail();
+      }
+    });
+
+    // Boot
+    (async function boot() {
+      await initElementSdk();
+      await initStorage();
+      await loadImageManifest();
+      await preloadMonsterImages();
+      applyConfig();
+      showStart();
+
+      const qs = new URLSearchParams(location.search);
+      if (qs.has('test')) {
+        await runTests();
+      }
+    })();
+  </script>
+</body>
+</html>
