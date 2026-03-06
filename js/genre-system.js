@@ -29,6 +29,16 @@
       badgeClass: 'bg-yellow-500',
       explanation: `📋 解き方：\nオームの法則: V = IR\n(V: 電圧[V], I: 電流[A], R: 抵抗[Ω])\n\nポイント：\n• 電圧と電流は比例関係\n• 抵抗が大きいほど電流は小さくなります`,
       generateQuestion: generateOhmQuestion
+    },
+    wind: {
+      label: '風タイプ',
+      shortName: '風',
+      emoji: '🌪️',
+      subtitle: '圧力の計算',
+      buttonClass: 'bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600',
+      badgeClass: 'bg-teal-500',
+      explanation: `📋 解き方：\n圧力(Pa) = 力(N) ÷ 面積(cm²)\n\nポイント：\n• 力が大きいほど圧力は大きくなります\n• 面積が小さいほど圧力は大きくなります\n• 求めたい値に合わせて式を変形しましょう`,
+      generateQuestion: generatePressureQuestion
     }
   };
 
@@ -140,6 +150,40 @@
       answer: R,
       hint: `抵抗(Ω) = 電圧(V) ÷ 電流(A)\n= ${V} ÷ ${I}`,
       unit: 'Ω'
+    };
+  }
+
+  function generatePressureQuestion() {
+    const questionTypes = ['find_pressure', 'find_force', 'find_area'];
+    const qType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+
+    const area = Math.floor(Math.random() * 9) + 2; // 2〜10 cm²
+    const pressure = (Math.floor(Math.random() * 9) + 2) * 10; // 20〜100 Pa
+    const force = pressure * area;
+
+    if (qType === 'find_pressure') {
+      return {
+        question: `${force}Nの力が${area}cm²の面にかかるとき、圧力は何Paですか？`,
+        answer: pressure,
+        hint: `圧力(Pa) = 力(N) ÷ 面積(cm²)\n= ${force} ÷ ${area}`,
+        unit: 'Pa'
+      };
+    }
+
+    if (qType === 'find_force') {
+      return {
+        question: `${pressure}Paの圧力を${area}cm²の面にかけるには、何Nの力が必要ですか？`,
+        answer: force,
+        hint: `力(N) = 圧力(Pa) × 面積(cm²)\n= ${pressure} × ${area}`,
+        unit: 'N'
+      };
+    }
+
+    return {
+      question: `${force}Nの力で${pressure}Paの圧力をかけるとき、面積は何cm²ですか？`,
+      answer: area,
+      hint: `面積(cm²) = 力(N) ÷ 圧力(Pa)\n= ${force} ÷ ${pressure}`,
+      unit: 'cm²'
     };
   }
 
