@@ -1048,6 +1048,29 @@ let imageManifestLoaded = false;
       if (title) title.textContent = config.game_title || defaultConfig.game_title;
     }
 
+
+    function updateStatsDisplay() {
+      const unlockedEl = document.getElementById('unlocked-count');
+      if (unlockedEl) {
+        const unique = new Set(gameState.unlockedMonsters || []);
+        unlockedEl.textContent = String(unique.size);
+      }
+
+      const solvedEl = document.getElementById('total-solved');
+      if (solvedEl) solvedEl.textContent = String(gameState.totalQuestions || 0);
+
+      const accuracyEl = document.getElementById('total-accuracy');
+      if (accuracyEl) {
+        if (!gameState.totalQuestions) {
+          accuracyEl.textContent = '-%';
+        } else {
+          const rate = Math.round((gameState.totalCorrect / gameState.totalQuestions) * 100);
+          accuracyEl.textContent = `${rate}%`;
+        }
+      }
+    }
+
+
     // ============================================
     // Image manifest loader
     // ============================================
