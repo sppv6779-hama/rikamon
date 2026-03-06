@@ -922,6 +922,22 @@ let imageManifestLoaded = false;
 
     let storage = makeNoopAdapter();
 
+    function updateStatsDisplay() {
+      const unlockedEl = document.getElementById('unlocked-count');
+      if (unlockedEl) unlockedEl.textContent = String(new Set(gameState.unlockedMonsters || []).size);
+
+      const solvedEl = document.getElementById('total-solved');
+      if (solvedEl) solvedEl.textContent = String(gameState.totalQuestions || 0);
+
+      const accuracyEl = document.getElementById('total-accuracy');
+      if (accuracyEl) {
+        const q = gameState.totalQuestions || 0;
+        accuracyEl.textContent = q > 0
+          ? `${Math.round(((gameState.totalCorrect || 0) / q) * 100)}%`
+          : '-%';
+      }
+    }
+
     const dataHandler = {
       onDataChanged(data) {
         currentData = Array.isArray(data) ? data : [];
@@ -1154,6 +1170,82 @@ let imageManifestLoaded = false;
     // ============================================
     // Game Flow
     // ============================================
+
+    function hideAllScreens() {
+      ['start-screen', 'genre-screen', 'question-screen', 'result-screen', 'evolution-screen', 'complete-screen', 'zukan-screen', 'gameover-screen']
+        .forEach((id) => document.getElementById(id)?.classList.add('hidden'));
+    }
+
+    function showStart() {
+      hideAllScreens();
+      document.getElementById('start-screen')?.classList.remove('hidden');
+      updateStatsDisplay();
+      if (typeof renderTitleMonsters === 'function') renderTitleMonsters();
+    }
+
+    function showGenreSelect() {
+      hideAllScreens();
+      document.getElementById('genre-screen')?.classList.remove('hidden');
+    }
+
+    function showZukan() {
+      hideAllScreens();
+      document.getElementById('zukan-screen')?.classList.remove('hidden');
+      renderZukan();
+    }
+
+    function updateLifeDisplay() {
+      const wrap = document.getElementById('q-life');
+      if (!wrap) return;
+      const life = Math.max(0, Number(gameState.life ?? 3));
+      wrap.innerHTML = Array.from({ length: 3 }, (_, i) =>
+        `<span class="${i < life ? 'text-red-400' : 'text-white/25'}">❤</span>`
+      ).join('');
+    }
+
+    function getMonsterKey() {
+      if (gameState.currentStage === 'egg' || !gameState.currentType) return 'egg';
+      if (gameState.currentStage === 'baby' || gameState.currentStage === 'growth') {
+        return `${gameState.currentStage}_${gameState.currentType}`;
+      }
+      const variant = gameState.currentVariant || 'balance';
+      return `${gameState.currentStage}_${gameState.currentType}_${variant}`;
+    }
+
+    function ensureUnlocked(monsterKey) {
+      if (!monsterKey) return;
+      if (!Array.isArray(gameState.unlockedMonsters)) gameState.unlockedMonsters = ['egg'];
+      if (!gameState.unlockedMonsters.includes(monsterKey)) {
+        gameState.unlockedMonsters.push(monsterKey);
+      }
+    }
+
+    function renderMonster(container, monsterKey, size = 160) {
+      if (!container) return;
+      const m = MONSTERS[monsterKey] || MONSTERS.egg;
+      const img = MONSTER_IMAGE_OVERRIDES[monsterKey] || m?.img || '';
+      container.innerHTML = '';
+
+      if (img) {
+        const el = document.createElement('img');
+        el.src = img;
+        el.alt = m?.name || monsterKey;
+        el.style.width = `${size}px`;
+        el.style.height = `${size}px`;
+        el.style.objectFit = 'contain';
+        el.onerror = () => {
+          container.innerHTML = `<div style="font-size:${Math.round(size * 0.5)}px; line-height:1">${m?.emoji || '❓'}</div>`;
+        };
+        container.appendChild(el);
+        return;
+      }
+
+      container.innerHTML = `<div style="font-size:${Math.round(size * 0.5)}px; line-height:1">${m?.emoji || '❓'}</div>`;
+    }
+
+    function getTotalWrong() {
+      return Math.max(0, (gameState.cycleQuestions || 0) - (gameState.cycleCorrect || 0));
+    }
 
     function selectGenre(type) {
       gameState.currentType = type;
