@@ -922,6 +922,22 @@ let imageManifestLoaded = false;
 
     let storage = makeNoopAdapter();
 
+    function updateStatsDisplay() {
+      const unlockedEl = document.getElementById('unlocked-count');
+      if (unlockedEl) unlockedEl.textContent = String(new Set(gameState.unlockedMonsters || []).size);
+
+      const solvedEl = document.getElementById('total-solved');
+      if (solvedEl) solvedEl.textContent = String(gameState.totalQuestions || 0);
+
+      const accuracyEl = document.getElementById('total-accuracy');
+      if (accuracyEl) {
+        const q = gameState.totalQuestions || 0;
+        accuracyEl.textContent = q > 0
+          ? `${Math.round(((gameState.totalCorrect || 0) / q) * 100)}%`
+          : '-%';
+      }
+    }
+
     const dataHandler = {
       onDataChanged(data) {
         currentData = Array.isArray(data) ? data : [];
