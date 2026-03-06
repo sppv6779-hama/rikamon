@@ -26,7 +26,7 @@
       subtitle: 'フックの法則',
       buttonClass: 'bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600',
       badgeClass: 'bg-orange-500',
-      explanation: `📋 解き方：\nバネは、加えた力に比例してのびます。\n\nポイント：\n• 「1Nあたり何cmのびるか」を使って考えます\n• のび(cm) = 力(N) × (1Nあたりのびる長さ)\n• 力(N) = のび(cm) ÷ (1Nあたりのびる長さ)`,
+      explanation: `📋 解き方：\nバネは、加えた力に比例してのびます。\n\nポイント：\n• 「1Nあたり何mのびるか」を使って考えます\n• のび(m) = 力(N) × (1Nあたりのびる長さ)\n• 力(N) = のび(m) ÷ (1Nあたりのびる長さ)`,
       generateQuestion: generateHookQuestion
     },
     electric: {
@@ -94,27 +94,27 @@
     const questionTypes = ['find_force', 'find_extension'];
     const qType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
 
-    const cmPerNOptions = [1, 2, 3, 4, 5, 6, 8, 10];
-    const cmPerN = cmPerNOptions[Math.floor(Math.random() * cmPerNOptions.length)];
+    const mPerNOptions = [1, 2, 3, 4, 5, 6, 8, 10];
+    const mPerN = mPerNOptions[Math.floor(Math.random() * mPerNOptions.length)];
     const x = Math.floor(Math.random() * 10) + 1;
 
     if (qType === 'find_force') {
-      const extension = x * cmPerN;
+      const extension = x * mPerN;
       return {
-        question: `1Nあたり${cmPerN}cmのびるバネを${extension}cmのばすには、何Nの力が必要ですか？`,
+        question: `1Nあたり${mPerN}mのびるバネを${extension}mのばすには、何Nの力が必要ですか？`,
         answer: x,
-        hint: `力(N) = のび(cm) ÷ (1Nあたりのびる長さ)\n= ${extension} ÷ ${cmPerN}`,
+        hint: `力(N) = のび(m) ÷ (1Nあたりのびる長さ)\n= ${extension} ÷ ${mPerN}`,
         unit: 'N'
       };
     }
 
     const force = x;
-    const extension = force * cmPerN;
+    const extension = force * mPerN;
     return {
-      question: `1Nあたり${cmPerN}cmのびるバネに${force}Nの力を加えると、何cmのびますか？`,
+      question: `1Nあたり${mPerN}mのびるバネに${force}Nの力を加えると、何mのびますか？`,
       answer: extension,
-      hint: `のび(cm) = 力(N) × (1Nあたりのびる長さ)\n= ${force} × ${cmPerN}`,
-      unit: 'cm'
+      hint: `のび(m) = 力(N) × (1Nあたりのびる長さ)\n= ${force} × ${mPerN}`,
+      unit: 'm'
     };
   }
 
