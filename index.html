@@ -26,7 +26,7 @@
       subtitle: 'フックの法則',
       buttonClass: 'bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600',
       badgeClass: 'bg-orange-500',
-      explanation: `📋 解き方：\nバネは、加えた力に比例してのびます。\n\nポイント：\n• 「1Nあたり何cmのびるか」を使って考えます\n• のび(cm) = 力(N) × (1Nあたりのびる長さ)\n• 力(N) = のび(cm) ÷ (1Nあたりのびる長さ)`,
+      explanation: `📋 解き方：\nバネは、加えた力に比例してのびます。\n\nポイント：\n• 「1Nあたり何mのびるか」を使って考えます\n• のび(m) = 力(N) × (1Nあたりのびる長さ)\n• 力(N) = のび(m) ÷ (1Nあたりのびる長さ)`,
       generateQuestion: generateHookQuestion
     },
     electric: {
@@ -46,7 +46,7 @@
       subtitle: '圧力の計算',
       buttonClass: 'bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600',
       badgeClass: 'bg-teal-500',
-      explanation: `📋 解き方：\n圧力(Pa) = 力(N) ÷ 面積(cm²)\n\nポイント：\n• 力が大きいほど圧力は大きくなります\n• 面積が小さいほど圧力は大きくなります\n• 求めたい値に合わせて式を変形しましょう`,
+      explanation: `📋 解き方：\n圧力(Pa) = 力(N) ÷ 面積(m²)\n\nポイント：\n• 力が大きいほど圧力は大きくなります\n• 面積が小さいほど圧力は大きくなります\n• 求めたい値に合わせて式を変形しましょう`,
       generateQuestion: generatePressureQuestion
     }
   };
@@ -104,27 +104,27 @@
     const questionTypes = ['find_force', 'find_extension'];
     const qType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
 
-    const cmPerNOptions = [1, 2, 3, 4, 5, 6, 8, 10];
-    const cmPerN = cmPerNOptions[Math.floor(Math.random() * cmPerNOptions.length)];
+    const mPerNOptions = [1, 2, 3, 4, 5, 6, 8, 10];
+    const mPerN = mPerNOptions[Math.floor(Math.random() * mPerNOptions.length)];
     const x = Math.floor(Math.random() * 10) + 1;
 
     if (qType === 'find_force') {
-      const extension = x * cmPerN;
+      const extension = x * mPerN;
       return {
-        question: `1Nあたり${cmPerN}cmのびるバネを${extension}cmのばすには、何Nの力が必要ですか？`,
+        question: `1Nあたり${mPerN}mのびるバネを${extension}mのばすには、何Nの力が必要ですか？`,
         answer: x,
-        hint: `力(N) = のび(cm) ÷ (1Nあたりのびる長さ)\n= ${extension} ÷ ${cmPerN}`,
+        hint: `力(N) = のび(m) ÷ (1Nあたりのびる長さ)\n= ${extension} ÷ ${mPerN}`,
         unit: 'N'
       };
     }
 
     const force = x;
-    const extension = force * cmPerN;
+    const extension = force * mPerN;
     return {
-      question: `1Nあたり${cmPerN}cmのびるバネに${force}Nの力を加えると、何cmのびますか？`,
+      question: `1Nあたり${mPerN}mのびるバネに${force}Nの力を加えると、何mのびますか？`,
       answer: extension,
-      hint: `のび(cm) = 力(N) × (1Nあたりのびる長さ)\n= ${force} × ${cmPerN}`,
-      unit: 'cm'
+      hint: `のび(m) = 力(N) × (1Nあたりのびる長さ)\n= ${force} × ${mPerN}`,
+      unit: 'm'
     };
   }
 
@@ -166,33 +166,33 @@
     const questionTypes = ['find_pressure', 'find_force', 'find_area'];
     const qType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
 
-    const area = Math.floor(Math.random() * 9) + 2; // 2〜10 cm²
+    const area = Math.floor(Math.random() * 9) + 2; // 2〜10 m²
     const pressure = (Math.floor(Math.random() * 9) + 2) * 10; // 20〜100 Pa
     const force = pressure * area;
 
     if (qType === 'find_pressure') {
       return {
-        question: `${force}Nの力が${area}cm²の面にかかるとき、圧力は何Paですか？`,
+        question: `${force}Nの力が${area}m²の面にかかるとき、圧力は何Paですか？`,
         answer: pressure,
-        hint: `圧力(Pa) = 力(N) ÷ 面積(cm²)\n= ${force} ÷ ${area}`,
+        hint: `圧力(Pa) = 力(N) ÷ 面積(m²)\n= ${force} ÷ ${area}`,
         unit: 'Pa'
       };
     }
 
     if (qType === 'find_force') {
       return {
-        question: `${pressure}Paの圧力を${area}cm²の面にかけるには、何Nの力が必要ですか？`,
+        question: `${pressure}Paの圧力を${area}m²の面にかけるには、何Nの力が必要ですか？`,
         answer: force,
-        hint: `力(N) = 圧力(Pa) × 面積(cm²)\n= ${pressure} × ${area}`,
+        hint: `力(N) = 圧力(Pa) × 面積(m²)\n= ${pressure} × ${area}`,
         unit: 'N'
       };
     }
 
     return {
-      question: `${force}Nの力で${pressure}Paの圧力をかけるとき、面積は何cm²ですか？`,
+      question: `${force}Nの力で${pressure}Paの圧力をかけるとき、面積は何m²ですか？`,
       answer: area,
-      hint: `面積(cm²) = 力(N) ÷ 圧力(Pa)\n= ${force} ÷ ${pressure}`,
-      unit: 'cm²'
+      hint: `面積(m²) = 力(N) ÷ 圧力(Pa)\n= ${force} ÷ ${pressure}`,
+      unit: 'm²'
     };
   }
 
