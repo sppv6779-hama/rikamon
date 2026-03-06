@@ -2620,9 +2620,41 @@ const MONSTER_IMAGE_OVERRIDES = { ...window.MonsterData.imageOverrides }; // { m
     }
 
     // Key handlers
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !document.getElementById('question-screen').classList.contains('hidden')) {
+    function isScreenVisible(id) {
+      const el = document.getElementById(id);
+      return !!el && !el.classList.contains('hidden');
+    }
+
+    function handleEnterForVisibleScreen() {
+      if (isScreenVisible('question-screen')) {
         submitAnswer();
+        return true;
+      }
+
+      if (isScreenVisible('result-screen')) {
+        document.getElementById('result-next-btn')?.click();
+        return true;
+      }
+
+      if (isScreenVisible('evolution-screen')) {
+        const evoBtn = document.getElementById('evo-continue-btn');
+        if (evoBtn && !evoBtn.classList.contains('hidden') && !evoBtn.disabled) {
+          evoBtn.click();
+          return true;
+        }
+      }
+
+      if (isScreenVisible('complete-screen')) {
+        createNewEgg();
+        return true;
+      }
+
+      return false;
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && handleEnterForVisibleScreen()) {
+        e.preventDefault();
       }
       if (e.key === 'Escape') {
         closeMonsterDetail();
