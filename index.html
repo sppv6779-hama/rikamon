@@ -38,6 +38,16 @@
       badgeClass: 'bg-yellow-500',
       explanation: `📋 解き方：\nオームの法則: V = IR\n(V: 電圧[V], I: 電流[A], R: 抵抗[Ω])\n\nポイント：\n• 電圧と電流は比例関係\n• 抵抗が大きいほど電流は小さくなります`,
       generateQuestion: generateOhmQuestion
+    },
+    wind: {
+      label: '風タイプ',
+      shortName: '風',
+      emoji: '🌪️',
+      subtitle: '圧力の計算',
+      buttonClass: 'bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600',
+      badgeClass: 'bg-teal-500',
+      explanation: `📋 解き方：\n圧力(Pa) = 力(N) ÷ 面積(m²)\n\nポイント：\n• 力が大きいほど圧力は大きくなります\n• 面積が小さいほど圧力は大きくなります\n• 求めたい値に合わせて式を変形しましょう`,
+      generateQuestion: generatePressureQuestion
     }
   };
 
@@ -152,6 +162,40 @@
     };
   }
 
+  function generatePressureQuestion() {
+    const questionTypes = ['find_pressure', 'find_force', 'find_area'];
+    const qType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+
+    const area = Math.floor(Math.random() * 9) + 2; // 2〜10 m²
+    const pressure = (Math.floor(Math.random() * 9) + 2) * 10; // 20〜100 Pa
+    const force = pressure * area;
+
+    if (qType === 'find_pressure') {
+      return {
+        question: `${force}Nの力が${area}m²の面にかかるとき、圧力は何Paですか？`,
+        answer: pressure,
+        hint: `圧力(Pa) = 力(N) ÷ 面積(m²)\n= ${force} ÷ ${area}`,
+        unit: 'Pa'
+      };
+    }
+
+    if (qType === 'find_force') {
+      return {
+        question: `${pressure}Paの圧力を${area}m²の面にかけるには、何Nの力が必要ですか？`,
+        answer: force,
+        hint: `力(N) = 圧力(Pa) × 面積(m²)\n= ${pressure} × ${area}`,
+        unit: 'N'
+      };
+    }
+
+    return {
+      question: `${force}Nの力で${pressure}Paの圧力をかけるとき、面積は何m²ですか？`,
+      answer: area,
+      hint: `面積(m²) = 力(N) ÷ 圧力(Pa)\n= ${force} ÷ ${pressure}`,
+      unit: 'm²'
+    };
+  }
+
   global.GenreSystem = {
     listGenres,
     getGenre,
@@ -173,7 +217,6 @@
       "ultimate_fighting_accuracy": "https://image2url.com/r2/default/images/1771984319657-ba68776d-c77f-4fce-8cf0-cda010a70b9d.png",
       "ultimate_fighting_balance": "https://image2url.com/r2/default/images/1771984421992-81b1415c-351d-4207-9ee8-deb618277f22.png",
       "ultimate_fighting_speed": "https://image2url.com/r2/default/images/1771984499980-00bf23b1-e1f9-4f0c-873c-a559eb5a5788.png",
-        "baby_water": "https://image2url.com/r2/default/images/1772052961365-6c1f16ee-b0ce-42f8-b0bd-055c01255582.png",
   "baby_water": "https://image2url.com/r2/default/images/1772052961365-6c1f16ee-b0ce-42f8-b0bd-055c01255582.png",
   "growth_water": "https://image2url.com/r2/default/images/1772052997810-f5d03541-f93d-493c-af50-c7fb46b6bc68.png",
   "mature_water_accuracy": "https://image2url.com/r2/default/images/1772053023058-243b9003-b781-4c9a-a29c-5635cf902da8.png",
@@ -204,11 +247,13 @@
       baby_water: { name: 'アクアベビー', stage: 'baby', type: 'water', emoji: '💧', color: '#60a5fa' },
       baby_fighting: { name: 'ファイトベビー', stage: 'baby', type: 'fighting', emoji: '👊', color: '#f97316' },
       baby_electric: { name: 'スパークベビー', stage: 'baby', type: 'electric', emoji: '⚡', color: '#facc15' },
+      baby_wind: { name: 'ブリーズベビー', stage: 'baby', type: 'wind', emoji: '🍃', color: '#2dd4bf' },
 
       // 成長期（分岐なし）
       growth_water: { name: 'アクアビアル', stage: 'growth', type: 'water', emoji: '🌊', color: '#3b82f6' },
       growth_fighting: { name: 'コイルパップ', stage: 'growth', type: 'fighting', emoji: '🔥', color: '#ef4444' },
       growth_electric: { name: 'バッテリドレイク', stage: 'growth', type: 'electric', emoji: '🌟', color: '#eab308' },
+      growth_wind: { name: 'ゲイルウィング', stage: 'growth', type: 'wind', emoji: '🌬️', color: '#14b8a6' },
 
       // 成熟期（水）
       mature_water_accuracy: { name: 'ケミカルシェルター', stage: 'mature', type: 'water', variant: 'accuracy', emoji: '🐋', color: '#2563eb' },
@@ -225,6 +270,11 @@
       mature_electric_speed: { name: 'グリッド・ナイトメア', stage: 'mature', type: 'electric', variant: 'speed', emoji: '🐉', color: '#eab308' },
       mature_electric_balance: { name: 'ボルテクス・レックス', stage: 'mature', type: 'electric', variant: 'balance', emoji: '🦋', color: '#fbbf24' },
 
+      // 成熟期（風）
+      mature_wind_accuracy: { name: 'エアロ・セージ', stage: 'mature', type: 'wind', variant: 'accuracy', emoji: '🦉', color: '#0d9488' },
+      mature_wind_speed: { name: 'ストーム・ラプター', stage: 'mature', type: 'wind', variant: 'speed', emoji: '🦅', color: '#06b6d4' },
+      mature_wind_balance: { name: 'サイクロン・ガーディアン', stage: 'mature', type: 'wind', variant: 'balance', emoji: '🐲', color: '#0f766e' },
+
       // 完全体（水）
       perfect_water_accuracy: { name: 'アクア・ジェネシス', stage: 'perfect', type: 'water', variant: 'accuracy', emoji: '🔱', color: '#1d4ed8' },
       perfect_water_speed: { name: 'サイバー・ラブリシール', stage: 'perfect', type: 'water', variant: 'speed', emoji: '🌊', color: '#0e7490' },
@@ -240,6 +290,11 @@
       perfect_electric_speed: { name: 'テンペスト・ハザード', stage: 'perfect', type: 'electric', variant: 'speed', emoji: '🐲', color: '#ca8a04' },
       perfect_electric_balance: { name: 'ライデン・サイバティクス', stage: 'perfect', type: 'electric', variant: 'balance', emoji: '👑', color: '#eab308' },
 
+      // 完全体（風）
+      perfect_wind_accuracy: { name: 'シルフィード・オラクル', stage: 'perfect', type: 'wind', variant: 'accuracy', emoji: '🪽', color: '#0f766e' },
+      perfect_wind_speed: { name: 'ジェット・テンペスト', stage: 'perfect', type: 'wind', variant: 'speed', emoji: '🌪️', color: '#0891b2' },
+      perfect_wind_balance: { name: 'エアリアル・バスティオン', stage: 'perfect', type: 'wind', variant: 'balance', emoji: '🏰', color: '#0e7490' },
+
       // 究極体（水）
       ultimate_water_accuracy: { name: 'アーク・オケアノス', stage: 'ultimate', type: 'water', variant: 'accuracy', emoji: '🌌', color: '#1e40af' },
       ultimate_water_speed: { name: 'クリスタル・パレス', stage: 'ultimate', type: 'water', variant: 'speed', emoji: '🌀', color: '#155e75' },
@@ -253,7 +308,12 @@
       // 究極体（電気）
       ultimate_electric_accuracy: { name: 'ヘヴンズ・オーム・セラフィム', stage: 'ultimate', type: 'electric', variant: 'accuracy', emoji: '⚡', color: '#713f12' },
       ultimate_electric_speed: { name: 'ヴォルテック・ストーム', stage: 'ultimate', type: 'electric', variant: 'speed', emoji: '🌩️', color: '#854d0e' },
-      ultimate_electric_balance: { name: 'デウス・エクス・ケラウノス', stage: 'ultimate', type: 'electric', variant: 'balance', emoji: '👑', color: '#a16207' }
+      ultimate_electric_balance: { name: 'デウス・エクス・ケラウノス', stage: 'ultimate', type: 'electric', variant: 'balance', emoji: '👑', color: '#a16207' },
+
+      // 究極体（風）
+      ultimate_wind_accuracy: { name: 'アネモス・カノン', stage: 'ultimate', type: 'wind', variant: 'accuracy', emoji: '🕊️', color: '#115e59' },
+      ultimate_wind_speed: { name: 'ヴォルテックス・ノヴァ', stage: 'ultimate', type: 'wind', variant: 'speed', emoji: '🌪️', color: '#155e75' },
+      ultimate_wind_balance: { name: 'ストラトス・レガリア', stage: 'ultimate', type: 'wind', variant: 'balance', emoji: '👑', color: '#134e4a' }
     };;
 
   const DESCRIPTIONS = {
@@ -261,10 +321,12 @@
         baby_water: 'アクアベビー。水に親しむ小さな研究員。質量パーセント濃度の計算を覚えるほど、しずくの動きが安定していく。',
         baby_fighting: 'ファイトベビー。バネの反動でぴょんぴょん動く元気者。フックの法則を学ぶほど、パンチのキレが増す。',
         baby_electric: 'スパークベビー。体に小さな放電が走る。オームの法則（V=IR）を理解すると、光るリズムが整っていく。',
+        baby_wind: 'ブリーズベビー。そよ風と一緒に遊ぶ風の幼体。圧力の計算を覚えるほど、起こす風の強さを上手に調整できる。',
 
         growth_water: '自身の体よりも大きなフラスコを宝物のように抱えた海獣の子供。フラスコの中には高濃度の魔力水が満たされている。本人はその強大な力に気づいておらず、中身がパシャパシャと跳ねる音を楽しむために、いつも元気に跳ね回っている。',
         growth_fighting: '体の各所が小さなバネで構成された武道家の卵。ぴょんぴょんと跳ね回ることで攻撃を回避し、隙を見て「ばね」の反動を活かした正拳突きを放つ。',
         growth_electric: '胸部にエネルギー残量を表示する「蓄電メーター」を持つドラゴンの幼体。尻尾の先がコンセントプラグになっており、好奇心旺盛にいろいろな端子に尻尾を差し込んでは感電して喜んでいる。まだ放電する力は弱いが、体内に溜め込める電力のポテンシャルは計り知れず、将来の爆発的な進化を予感させる。',
+        growth_wind: '翼の羽ばたきで気流を操ることを覚えた成長期。上昇気流を利用して軽やかに飛び回り、小さなつむじ風で相手の姿勢を崩す。',
 
         mature_water_accuracy: '「堅牢」を体現した重厚な姿。背負っていたフラスコは変質し、硬質の岩石と融合して難攻不落の甲羅となった。甲羅から突き出した複数の瓶からは常に特殊な冷却液が噴出しており、周囲に水の障壁を展開することで、あらゆる物理攻撃を無効化する。',
         mature_water_speed: '「もっと可愛くなりたい！」という強い願いによって進化した姿。フラスコは増殖し、リボンや宝石で着飾ることで、自身の愛らしさを最大限にアピールしているアイドルモンスター。フラスコの中の水は、浴びた者を幸せな気分にさせる「ハッピー・リキッド」に変化した。戦闘は好まないが、しつこい相手には、フラスコからキラキラした高圧の水流を放つ。',
@@ -277,6 +339,9 @@
         mature_electric_accuracy: '神聖な力に目覚め、四枚の輝く翼を得た優雅な姿の竜。胸の電池は高密度の「ホーリー・リチウム」へと変化し、そこから生み出される電気は黄金の輪となって全身を包んでいる。邪悪なウイルスを浄化する「神聖放電」を操り、空から降り注ぐ雷は受ける者の属性によって、癒やしにも裁きにもなるという。その羽ばたきは電子の調べを奏で、戦場を静寂へと導く。',
         mature_electric_speed: 'スマートで冷徹な姿となったドラゴンの暗殺者。翼はソーラーパネルのような特殊な皮膜に覆われ、月明かりやわずかな光からも電力を吸収する。実体を持たない「電磁の影」を操って敵を幻惑し、影から影へと音もなく移動して背後からプラグ状の尾で致命的な放電を叩き込む。',
         mature_electric_balance: '力強い進化を遂げ、背中に巨大な「超高圧バッテリー」を背負った重量級の格闘竜。筋肉の発達に伴い、溢れ出す電力を制御しきれず、常に全身から青白い放電が漏れ出している。野生の荒々しさと電気エネルギーが融合しており、体当たり一つで都市の電網をショートさせるほどの破壊力を持つ。その咆哮は雷鳴そのもの。',
+        mature_wind_accuracy: '気圧差のわずかな揺らぎを感じ取る観測者。羽ばたきひとつで狙った一点にのみ高圧風を当てる精密制御を誇る。',
+        mature_wind_speed: 'ジェット気流のような翼で空を切り裂く高速型。連続して放つ真空刃で相手の隙を生み、瞬時に背後を取る。',
+        mature_wind_balance: '暴風と静風を切り替える守護者。攻撃時はサイクロン、守備時は緩衝気流で仲間を包む。',
 
         perfect_water_accuracy: '背中の甲羅がひとつの生態系へと進化した姿。常に清らかな滝が流れ落ち、そこから生まれる精霊たちが周囲を浮遊している。もはや戦うための姿ではなく、傷ついた海を癒やすために存在する「移動する聖域」そのものである。',
         perfect_water_speed: '「世界中に可愛さとハッピーを届けたい」という使命感に目覚め、自らの体を機械化した。愛らしい外見はそのままに、四肢は強力なスラスターとなり、陸海空を自由に高速移動できるようになった。背中に背負った巨大なフラスコ型キャノンは、体内で精製した超高濃度のエネルギー液を充填しており、それを結晶化させて撃ち出す「クリスタル・キャノン・バースト」は、見た目の美しさに反して凄まじい破壊力を持つ。メカニカルなボディになっても、お茶目な性格は変わっていない。',
@@ -289,6 +354,9 @@
         perfect_electric_accuracy: '肉体が「自然の精霊（雷雲）」へと変質した超越的な姿。全身の約半分が実体を失い、帯電した雲と浮遊するクリスタルへと変化している。もはや物理的な電池に頼る必要はなく、大気中の電子を無限に取り込み、自身の力へと変換できる。常に宙に浮き、足元から発生する巨大な竜巻と稲妻は彼の意思そのもの。自然現象を体現する姿でありながら、その眼差しには慈愛が満ちており、世界の均衡を乱す者には大自然の怒りをもって対峙する。',
         perfect_electric_speed: '成熟期の狡猾さを維持したまま、膨大な電力によって肉体が自然へと回帰した姿。全身の約半分が実体を失い、荒れ狂う雨雲と帯電した氷の結晶へと変質している。頭部には巨大な雷ボルト状の角が突き刺さり、常に周囲に局地的な落雷と竜巻を引き起こす。狡猾に嵐を操り、敵が疲弊した瞬間に「雲の体」で包み込んで内部から数万ボルトの電圧で分解する。かつての「電池」の面影は消え、世界そのものを脅かす「歩く気象災害」へと変貌した。',
         perfect_electric_balance: 'さらなる高出力を追求した結果、肉体を機械化した重装サイボーグ形態。右腕に装備された「多銃身型電磁ガトリング」は、自身の雷エネルギーを弾丸として射出し、鋼鉄の装甲すら容易に貫通する。背部の放熱フィンと機械翼により、莫大なエネルギー消費によるオーバーヒートを回避しつつ、空戦も可能となった。冷徹な電子頭脳とドラゴンの闘争本能が共存する、歩く戦略兵器。',
+        perfect_wind_accuracy: '大気データを先読みし、天候の変化を数秒先に捉える完全体。狙撃のように一点へ超高圧の風弾を撃ち込む。',
+        perfect_wind_speed: 'ジェットの尾を引く超高速形態。移動軌跡そのものが連鎖竜巻となり、戦場全体を制圧する。',
+        perfect_wind_balance: '空中要塞のような巨躯を得た防衛型。風圧砲と気流シールドを同時展開し、前線を押し上げる。',
 
         ultimate_water_accuracy: '惑星のあらゆる水の源泉であり、全ての生命の種の守護者となった究極の存在。「フラスコ」は、生命の起源そのものを封じ込めた、決して破壊されることのない「聖なる櫃（アーク）」へと進化した。背中のクリスタル宮殿の内部には、太古の純粋な海洋環境がそのまま保存されており、世界の海が汚染され尽くした時、新たな創世を行うための「バックアップ」としての機能を持つ。',
         ultimate_water_speed: '海にある膨大なデータを吸収し、超巨大な「動くガラスの城塞」へと進化した姿。本体のアザラシ部分は城の制御ユニットとなり、背中にはフラスコが変化した巨大で美しいクリスタルの宮殿がそびえ立っている。宮殿の内部は、あらゆる生物が楽しく過ごせる理想郷となっており、常にパーティーが開かれている。しかし、外敵に対しては、宮殿の各所に設置された無数の砲門から、虹色の破壊光線を一斉発射し、一切の慈悲なく殲滅する。その姿は、まさに鉄壁の守りと圧倒的な火力を兼ね備えた、動く幻想都市である。',
@@ -300,7 +368,10 @@
 
         ultimate_electric_accuracy: '世界の創生期から存在する「始原の雷データ」を継承し、六枚の翼を持つ熾天使の姿で現出した究極形態。もはや個別の生命体ではなく、世界に循環する全てのエネルギーの「抵抗（流れ）」を調整し、平穏を保つための「聖なる変電神」として定義されている。胸部に宿る「ジェネシス・セル」は、かつての電池の概念を超越した無限のエネルギー生成炉であり、ここから放たれる輝きは闇を払い、傷ついたモンスターのデータを瞬時に修復する。',
         ultimate_electric_speed: '世界の気象制御サーバーをハッキングし、その全権限を奪取することで進化した究極の姿。もはや「嵐」という現象を操るのではなく、自らが「大気の意思」として君臨している。「狡猾」な性質は神の如き冷徹さへと昇華されており、直接手を下すことなく、敵対する勢力を異常気象や連続する落雷によって静かに、そして確実に自滅へと追い込む。右手に持つ巨大な雷鎚は、かつての電池の概念を遥かに超え、惑星一つを焼き尽くすほどの電気エネルギーを一撃で放電する。',
-        ultimate_electric_balance: '世界中に存在する膨大な電磁データと古代の神殿遺跡データを同時に取り込み、限界突破の果てに神格化した究極の姿。もはや単なる戦闘兵器ではなく、世界における全てのエネルギー循環を監視・管理する「雷神」として君臨している。普段はネットワークの最深部にある「雷雲の神域」で静観を貫いているが、世界の均衡を大きく乱す存在が現れた時、天罰として六枚の翼から惑星規模の裁きの雷を解き放つ。'
+        ultimate_electric_balance: '世界中に存在する膨大な電磁データと古代の神殿遺跡データを同時に取り込み、限界突破の果てに神格化した究極の姿。もはや単なる戦闘兵器ではなく、世界における全てのエネルギー循環を監視・管理する「雷神」として君臨している。普段はネットワークの最深部にある「雷雲の神域」で静観を貫いているが、世界の均衡を大きく乱す存在が現れた時、天罰として六枚の翼から惑星規模の裁きの雷を解き放つ。',
+        ultimate_wind_accuracy: '地球規模の気圧配置を読む風の神鳥。嵐を鎮めることも、一点に神罰の風圧を落とすこともできる。',
+        ultimate_wind_speed: '音速を超える暴風と同化した究極体。空を走るだけで超大型竜巻が連続発生し、地形さえ作り変える。',
+        ultimate_wind_balance: '天空の循環を司る王。暴風の力と穏やかな偏西風を使い分け、世界の気象を恒常へ導く。'
       };
 
   function getDescription(monsterKey) {
@@ -2088,7 +2159,7 @@ const MONSTER_IMAGE_OVERRIDES = { ...window.MonsterData.imageOverrides }; // { m
       const grid = document.getElementById('zukan-grid');
       grid.innerHTML = '';
 
-      const typeOrder = { water: 0, fighting: 1, electric: 2, wind: 3, undefined: 99, null: 99 };
+      const typeOrder = { water: 0, fighting: 1, electric: 2, undefined: 99, null: 99 };
       const stageOrder = { egg: 0, baby: 1, growth: 2, mature: 3, perfect: 4, ultimate: 5 };
       const variantOrder = { accuracy: 0, balance: 1, speed: 2, undefined: 9, null: 9 };
 
