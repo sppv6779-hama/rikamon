@@ -1478,6 +1478,7 @@ const MONSTER_IMAGE_OVERRIDES = { ...window.MonsterData.imageOverrides }; // { m
     function hideAllScreens() {
       ['start-screen', 'genre-screen', 'question-screen', 'result-screen', 'evolution-screen', 'complete-screen', 'zukan-screen', 'gameover-screen']
         .forEach((id) => document.getElementById(id)?.classList.add('hidden'));
+      hideTitleCustomizationUI();
     }
 
     function showStart() {
@@ -2430,10 +2431,13 @@ const MONSTER_IMAGE_OVERRIDES = { ...window.MonsterData.imageOverrides }; // { m
     }
 
     function hideTitleCustomizationUI() {
-  const layer = document.getElementById('title-custom-layer');
-  if (layer) layer.innerHTML = '';
-  hideTitleMenu();
-}
+      const layer = document.getElementById('title-custom-layer');
+      if (layer) {
+        layer.innerHTML = '';
+        layer.classList.add('hidden');
+      }
+      hideTitleMenu();
+    }
 
     function addMonsterToTitle(monsterKey) {
       if (!monsterKey || !MONSTERS[monsterKey]) return;
