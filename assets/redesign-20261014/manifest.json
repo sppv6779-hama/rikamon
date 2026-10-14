@@ -30,7 +30,7 @@
     "bytes": 320862
   },
   "growth_flying": {
-    "file": "assets/redesign-20261014/growth_flying.png",
+    "file": "assets/redesign-20261014/growth_flying_v2.png",
     "width": 640,
     "height": 586,
     "bytes": 437366
@@ -72,7 +72,7 @@
     "bytes": 601295
   },
   "mature_flying_balance": {
-    "file": "assets/redesign-20261014/mature_flying_balance.png",
+    "file": "assets/redesign-20261014/mature_flying_balance_v2.png",
     "width": 640,
     "height": 533,
     "bytes": 413759
