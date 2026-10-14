@@ -1,0 +1,266 @@
+{
+  "baby_fire": {
+    "file": "assets/redesign-20261014/baby_fire.png",
+    "width": 640,
+    "height": 427,
+    "bytes": 193747
+  },
+  "baby_flying": {
+    "file": "assets/redesign-20261014/baby_flying.png",
+    "width": 592,
+    "height": 640,
+    "bytes": 398346
+  },
+  "baby_rock": {
+    "file": "assets/redesign-20261014/baby_rock.png",
+    "width": 640,
+    "height": 512,
+    "bytes": 236158
+  },
+  "baby_steel": {
+    "file": "assets/redesign-20261014/baby_steel.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 326560
+  },
+  "growth_fire": {
+    "file": "assets/redesign-20261014/growth_fire.png",
+    "width": 640,
+    "height": 529,
+    "bytes": 320862
+  },
+  "growth_flying": {
+    "file": "assets/redesign-20261014/growth_flying.png",
+    "width": 640,
+    "height": 586,
+    "bytes": 437366
+  },
+  "growth_rock": {
+    "file": "assets/redesign-20261014/growth_rock.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 417249
+  },
+  "growth_steel": {
+    "file": "assets/redesign-20261014/growth_steel.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 369936
+  },
+  "mature_fire_accuracy": {
+    "file": "assets/redesign-20261014/mature_fire_accuracy.png",
+    "width": 609,
+    "height": 640,
+    "bytes": 448865
+  },
+  "mature_fire_balance": {
+    "file": "assets/redesign-20261014/mature_fire_balance.png",
+    "width": 601,
+    "height": 640,
+    "bytes": 560741
+  },
+  "mature_fire_speed": {
+    "file": "assets/redesign-20261014/mature_fire_speed.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 364449
+  },
+  "mature_flying_accuracy": {
+    "file": "assets/redesign-20261014/mature_flying_accuracy.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 601295
+  },
+  "mature_flying_balance": {
+    "file": "assets/redesign-20261014/mature_flying_balance.png",
+    "width": 640,
+    "height": 533,
+    "bytes": 413759
+  },
+  "mature_flying_speed": {
+    "file": "assets/redesign-20261014/mature_flying_speed.png",
+    "width": 640,
+    "height": 427,
+    "bytes": 238336
+  },
+  "mature_rock_accuracy": {
+    "file": "assets/redesign-20261014/mature_rock_accuracy.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 532361
+  },
+  "mature_rock_balance": {
+    "file": "assets/redesign-20261014/mature_rock_balance.png",
+    "width": 640,
+    "height": 427,
+    "bytes": 428723
+  },
+  "mature_rock_speed": {
+    "file": "assets/redesign-20261014/mature_rock_speed.png",
+    "width": 613,
+    "height": 640,
+    "bytes": 415865
+  },
+  "mature_steel_accuracy": {
+    "file": "assets/redesign-20261014/mature_steel_accuracy.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 428805
+  },
+  "mature_steel_balance": {
+    "file": "assets/redesign-20261014/mature_steel_balance.png",
+    "width": 640,
+    "height": 427,
+    "bytes": 406764
+  },
+  "mature_steel_speed": {
+    "file": "assets/redesign-20261014/mature_steel_speed.png",
+    "width": 640,
+    "height": 427,
+    "bytes": 210238
+  },
+  "perfect_fire_accuracy": {
+    "file": "assets/redesign-20261014/perfect_fire_accuracy.png",
+    "width": 609,
+    "height": 640,
+    "bytes": 632707
+  },
+  "perfect_fire_balance": {
+    "file": "assets/redesign-20261014/perfect_fire_balance.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 631906
+  },
+  "perfect_fire_speed": {
+    "file": "assets/redesign-20261014/perfect_fire_speed.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 484014
+  },
+  "perfect_flying_accuracy": {
+    "file": "assets/redesign-20261014/perfect_flying_accuracy.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 782364
+  },
+  "perfect_flying_balance": {
+    "file": "assets/redesign-20261014/perfect_flying_balance.png",
+    "width": 640,
+    "height": 534,
+    "bytes": 558272
+  },
+  "perfect_flying_speed": {
+    "file": "assets/redesign-20261014/perfect_flying_speed.png",
+    "width": 640,
+    "height": 427,
+    "bytes": 349418
+  },
+  "perfect_rock_accuracy": {
+    "file": "assets/redesign-20261014/perfect_rock_accuracy.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 595770
+  },
+  "perfect_rock_balance": {
+    "file": "assets/redesign-20261014/perfect_rock_balance.png",
+    "width": 640,
+    "height": 427,
+    "bytes": 499130
+  },
+  "perfect_rock_speed": {
+    "file": "assets/redesign-20261014/perfect_rock_speed.png",
+    "width": 613,
+    "height": 640,
+    "bytes": 518230
+  },
+  "perfect_steel_accuracy": {
+    "file": "assets/redesign-20261014/perfect_steel_accuracy.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 586246
+  },
+  "perfect_steel_balance": {
+    "file": "assets/redesign-20261014/perfect_steel_balance.png",
+    "width": 640,
+    "height": 427,
+    "bytes": 475808
+  },
+  "perfect_steel_speed": {
+    "file": "assets/redesign-20261014/perfect_steel_speed.png",
+    "width": 640,
+    "height": 427,
+    "bytes": 313480
+  },
+  "ultimate_fire_accuracy": {
+    "file": "assets/redesign-20261014/ultimate_fire_accuracy.png",
+    "width": 609,
+    "height": 640,
+    "bytes": 708767
+  },
+  "ultimate_fire_balance": {
+    "file": "assets/redesign-20261014/ultimate_fire_balance.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 640964
+  },
+  "ultimate_fire_speed": {
+    "file": "assets/redesign-20261014/ultimate_fire_speed.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 557392
+  },
+  "ultimate_flying_accuracy": {
+    "file": "assets/redesign-20261014/ultimate_flying_accuracy.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 745851
+  },
+  "ultimate_flying_balance": {
+    "file": "assets/redesign-20261014/ultimate_flying_balance.png",
+    "width": 546,
+    "height": 640,
+    "bytes": 610517
+  },
+  "ultimate_flying_speed": {
+    "file": "assets/redesign-20261014/ultimate_flying_speed.png",
+    "width": 640,
+    "height": 427,
+    "bytes": 385402
+  },
+  "ultimate_rock_accuracy": {
+    "file": "assets/redesign-20261014/ultimate_rock_accuracy.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 709804
+  },
+  "ultimate_rock_balance": {
+    "file": "assets/redesign-20261014/ultimate_rock_balance.png",
+    "width": 640,
+    "height": 427,
+    "bytes": 536367
+  },
+  "ultimate_rock_speed": {
+    "file": "assets/redesign-20261014/ultimate_rock_speed.png",
+    "width": 613,
+    "height": 640,
+    "bytes": 562170
+  },
+  "ultimate_steel_accuracy": {
+    "file": "assets/redesign-20261014/ultimate_steel_accuracy.png",
+    "width": 640,
+    "height": 585,
+    "bytes": 714857
+  },
+  "ultimate_steel_balance": {
+    "file": "assets/redesign-20261014/ultimate_steel_balance.png",
+    "width": 640,
+    "height": 427,
+    "bytes": 443122
+  },
+  "ultimate_steel_speed": {
+    "file": "assets/redesign-20261014/ultimate_steel_speed.png",
+    "width": 640,
+    "height": 427,
+    "bytes": 312919
+  }
+}
