@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-05",
+  "method": "Node VM with DOM stubs; production inline scripts and storage adapter",
+  "questionSamples": 252,
+  "questionKinds": {
+    "distance": 36,
+    "time": 36,
+    "speed": 36,
+    "thunder": 36,
+    "echo_distance": 36,
+    "echo_time": 36,
+    "echo_speed": 36
+  },
+  "existingTypesRegressionSamples": 200,
+  "monsters": 11,
+  "totalMonsters": 100,
+  "correctWrongHint": true,
+  "evolutionRoutes": true,
+  "encyclopediaDescriptions": true,
+  "saveReload": true,
+  "preservedExistingMonsters": true,
+  "browserVisualVerification": false
+}
