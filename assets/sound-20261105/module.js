@@ -54,6 +54,6 @@
   for (const [key, monster] of Object.entries(entries)) {
     global.MonsterData.monsters[key] = { ...monster, type: 'sound', emoji: '♪', color: '#c084fc' };
     global.MonsterData.descriptions[key] = monster.description;
-    global.MonsterData.imageOverrides[key] = `https://sppv6779-hama.github.io/rikamon/assets/sound-20261105/${key}.png`;
+    global.MonsterData.imageOverrides[key] = 'https://sppv6779-hama.github.io/rikamon/assets/sound-20261105/' + key + '.png';
   }
 })(window);
